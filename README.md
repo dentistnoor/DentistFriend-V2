@@ -10,7 +10,6 @@ DentistFriend is a modern dental practice management solution designed specifica
 - **Financial Tracking**: Monitor cash and insurance payments with detailed revenue analytics  
 - **Procedure Management**: Automated pricing from Excel sheets with support for multiple insurance providers
 - **Analytics Dashboard**: Visual insights into practice performance with interactive charts and statistics
-- **Modern UI**: Clean, responsive interface optimized for dental practice workflows
 
 ### Disclaimer
 
@@ -69,14 +68,6 @@ DentistFriend-V2/
 └── index.html             # Entry point
 ```
 
-## Features in Detail
-
-- **🏥 Multi-Payment Support**: Handle both cash and insurance patients
-- **📊 Real-time Analytics**: Track revenue, patient types, and popular procedures
-- **📱 Responsive Design**: Works seamlessly on desktop and mobile devices
-- **💾 Local Storage**: Patient data persists between sessions
-- **🎨 Modern UI**: Professional medical-grade color scheme and typography
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
@@ -85,4 +76,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 [Dr. Noor Hebbal](https://github.com/dentistnoor) - [Areeb Ahmed](https://github.com/areebahmeddd)
 
-## Built with ❤️ for the dental community
+Built with ❤️ for the dental community
