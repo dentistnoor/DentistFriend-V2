@@ -220,6 +220,9 @@ function setupEventListeners() {
     // Add event listeners for price and discount fields to calculate final amount
     document.getElementById('price').addEventListener('input', calculateFinalAmount);
     document.getElementById('discount').addEventListener('input', calculateFinalAmount);
+    
+    // Enhanced date picker functionality
+    setupDatePicker();
 
     // Edit form
     document.getElementById('edit-patient-form').addEventListener('submit', handleEditFormSubmit);
@@ -450,6 +453,164 @@ function calculateFinalAmount() {
         } else {
             finalAmountField.value = '';
         }
+    }
+}
+
+function setupDatePicker() {
+    const trigger = document.getElementById('date-picker-trigger');
+    const dropdown = document.getElementById('calendar-dropdown');
+    const hiddenInput = document.getElementById('visit-date');
+    const selectedDateDisplay = document.getElementById('selected-date-display');
+    const calendarTitle = document.getElementById('calendar-title');
+    const calendarDays = document.getElementById('calendar-days');
+    const prevMonth = document.getElementById('prev-month');
+    const nextMonth = document.getElementById('next-month');
+    
+    let currentDate = new Date();
+    let selectedDate = new Date(); // Default to today
+    let isOpen = false;
+    
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Initialize with today's date
+    updateSelectedDate(selectedDate);
+    
+    // Toggle dropdown
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+    });
+    
+    // Keyboard support
+    trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleDropdown();
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-date-picker')) {
+            closeDropdown();
+        }
+    });
+    
+    // Navigation
+    prevMonth.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+    
+    nextMonth.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+    
+    function toggleDropdown() {
+        if (isOpen) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    }
+    
+    function openDropdown() {
+        isOpen = true;
+        dropdown.classList.add('show');
+        trigger.setAttribute('aria-expanded', 'true');
+        currentDate = new Date(selectedDate);
+        renderCalendar();
+    }
+    
+    function closeDropdown() {
+        isOpen = false;
+        dropdown.classList.remove('show');
+        trigger.setAttribute('aria-expanded', 'false');
+    }
+    
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        calendarTitle.textContent = `${months[month]} ${year}`;
+        
+        // Clear previous days
+        calendarDays.innerHTML = '';
+        
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+        
+        // Previous month's trailing days
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+        for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+            const day = prevMonthLastDay - i;
+            const dayEl = createDayElement(day, 'other-month');
+            calendarDays.appendChild(dayEl);
+        }
+        
+        // Current month days
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dayEl = createDayElement(day);
+            
+            // Mark today
+            if (date.toDateString() === today.toDateString()) {
+                dayEl.classList.add('today');
+            }
+            
+            // Mark selected
+            if (date.toDateString() === selectedDate.toDateString()) {
+                dayEl.classList.add('selected');
+            }
+            
+            // Disable future dates
+            if (date > today) {
+                dayEl.classList.add('disabled');
+            } else {
+                dayEl.addEventListener('click', () => selectDate(date));
+            }
+            
+            calendarDays.appendChild(dayEl);
+        }
+        
+        // Next month's leading days
+        const remainingCells = 42 - (startingDayOfWeek + daysInMonth);
+        for (let day = 1; day <= remainingCells; day++) {
+            const dayEl = createDayElement(day, 'other-month');
+            calendarDays.appendChild(dayEl);
+        }
+    }
+    
+    function createDayElement(day, className = '') {
+        const dayEl = document.createElement('div');
+        dayEl.className = `calendar-day ${className}`;
+        dayEl.textContent = day;
+        return dayEl;
+    }
+    
+    function selectDate(date) {
+        selectedDate = new Date(date);
+        updateSelectedDate(selectedDate);
+        closeDropdown();
+    }
+    
+    function updateSelectedDate(date) {
+        const options = { 
+            weekday: 'short',
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        };
+        selectedDateDisplay.textContent = date.toLocaleDateString('en-US', options);
+        hiddenInput.value = date.toISOString().split('T')[0];
     }
 }
 
@@ -892,6 +1053,8 @@ function showError(message) {
     }, 5000);
 }
 
+
+
 // --- SETTINGS FUNCTIONS ---
 function setupSettingsTab() {
     // Load current doctor info
@@ -937,7 +1100,4 @@ async function init() {
     
     // Update stats
     updateStats();
-    
-    // Set today's date as default
-    document.getElementById('visit-date').valueAsDate = new Date();
 }
