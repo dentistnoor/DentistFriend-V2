@@ -287,7 +287,8 @@ function handleFormSubmit(e) {
         procedure: formData.get('procedure'),
         price: Number(formData.get('price')),
         discount: Number(formData.get('discount')) || 0,
-        finalAmount: Number(formData.get('final-amount'))
+        finalAmount: Number(formData.get('final-amount')),
+        remarks: formData.get('remarks') || ''
     };
     
     patientLogs.push(log);
@@ -422,6 +423,7 @@ function clearProcedureDropdown() {
     document.getElementById('price').value = '';
     document.getElementById('discount').value = '';
     document.getElementById('final-amount').value = '';
+    document.getElementById('remarks').value = '';
 }
 
 function updatePriceFields() {
@@ -668,6 +670,7 @@ function renderPatientTable() {
             <td>SAR ${log.price}</td>
             <td>${log.discount ? log.discount + '%' : '-'}</td>
             <td>SAR ${log.finalAmount}</td>
+            <td class="remarks-cell" title="${log.remarks || ''}">${log.remarks ? (log.remarks.length > 50 ? log.remarks.substring(0, 50) + '...' : log.remarks) : '-'}</td>
             <td>
                 <button class="action-btn edit" onclick="editPatient(${log.id})" title="Edit Patient">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -714,6 +717,7 @@ function editPatient(id) {
     document.getElementById('edit-price').value = patient.price;
     document.getElementById('edit-discount').value = patient.discount || '';
     document.getElementById('edit-final-amount').value = patient.finalAmount;
+    document.getElementById('edit-remarks').value = patient.remarks || '';
     
     // Handle patient type specific fields
     if (patient.patientType === 'insurance') {
@@ -825,7 +829,8 @@ function handleEditFormSubmit(e) {
         procedure: formData.get('procedure'),
         price: Number(formData.get('price')),
         discount: Number(formData.get('discount')) || 0,
-        finalAmount: Number(formData.get('final-amount'))
+        finalAmount: Number(formData.get('final-amount')),
+        remarks: formData.get('remarks') || ''
     };
     
     localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
@@ -867,6 +872,7 @@ function clearEditProcedureDropdown() {
     document.getElementById('edit-price').value = '';
     document.getElementById('edit-discount').value = '';
     document.getElementById('edit-final-amount').value = '';
+    document.getElementById('edit-remarks').value = '';
 }
 
 // --- CHARTS ---

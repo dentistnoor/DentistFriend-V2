@@ -236,6 +236,14 @@
                             </div>
                         </div>
                         
+                        <!-- Remarks Row (full width) -->
+                        <div class="form-row-single">
+                            <div class="form-group">
+                                <label for="remarks">Remarks</label>
+                                <textarea id="remarks" name="remarks" rows="3" placeholder="Enter any additional notes or comments about the patient visit..."></textarea>
+                            </div>
+                        </div>
+                        
                         <button type="submit" class="submit-btn">
                             <span>Add Patient</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -284,6 +292,7 @@
                                 <th>Price</th>
                                 <th>Discount</th>
                                 <th>Final Amount</th>
+                                <th>Remarks</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -446,15 +455,23 @@
                     </div>
                 </div>
                 
-                <!-- Discount Row (hidden by default, shown for insurance) -->
-                <div class="form-row-single">
-                    <div class="form-group" id="edit-discount-row" style="display:none;">
-                        <label for="edit-discount">Discount (%)</label>
-                        <input type="number" id="edit-discount" name="discount" readonly>
-                    </div>
-                </div>
-                
-                <div class="modal-actions">
+                                 <!-- Discount Row (hidden by default, shown for insurance) -->
+                 <div class="form-row-single">
+                     <div class="form-group" id="edit-discount-row" style="display:none;">
+                         <label for="edit-discount">Discount (%)</label>
+                         <input type="number" id="edit-discount" name="discount" readonly>
+                     </div>
+                 </div>
+                 
+                 <!-- Remarks Row (full width) -->
+                 <div class="form-row-single">
+                     <div class="form-group">
+                         <label for="edit-remarks">Remarks</label>
+                         <textarea id="edit-remarks" name="remarks" rows="3" placeholder="Enter any additional notes or comments about the patient visit..."></textarea>
+                     </div>
+                 </div>
+                 
+                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
                     <button type="submit" class="btn-primary">
                         <span>Update Patient</span>
