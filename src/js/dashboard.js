@@ -221,6 +221,12 @@ function setupEventListeners() {
     document.getElementById('price').addEventListener('input', calculateFinalAmount);
     document.getElementById('discount').addEventListener('input', calculateFinalAmount);
 
+    // Edit form
+    document.getElementById('edit-patient-form').addEventListener('submit', handleEditFormSubmit);
+    document.getElementById('edit-patient-type').addEventListener('change', handleEditPatientTypeChange);
+    document.getElementById('edit-insurance-company').addEventListener('change', handleEditInsuranceCompanyChange);
+    document.getElementById('edit-procedure').addEventListener('change', updateEditPriceFields);
+
     // Search functionality
     document.getElementById('search-patients').addEventListener('input', handleSearch);
     
@@ -231,6 +237,13 @@ function setupEventListeners() {
             btn.classList.add('active');
             filterPatients(btn.dataset.filter);
         });
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('edit-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('edit-modal')) {
+            closeEditModal();
+        }
     });
 }
 
@@ -472,7 +485,13 @@ function renderPatientTable() {
             <td>${log.discount ? log.discount + '%' : '-'}</td>
             <td>SAR ${log.finalAmount}</td>
             <td>
-                <button class="action-btn delete" onclick="deletePatient(${log.id})">
+                <button class="action-btn edit" onclick="editPatient(${log.id})" title="Edit Patient">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+                <button class="action-btn delete" onclick="deletePatient(${log.id})" title="Delete Patient">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/>
                     </svg>
@@ -491,6 +510,177 @@ function deletePatient(id) {
         renderPatientTable();
         showSuccess('Patient record deleted successfully!');
     }
+}
+
+// --- EDIT PATIENT FUNCTIONALITY ---
+function editPatient(id) {
+    const patient = patientLogs.find(log => log.id === id);
+    if (!patient) {
+        showError('Patient record not found!');
+        return;
+    }
+    
+    // Populate the edit form
+    document.getElementById('edit-patient-id').value = patient.id;
+    document.getElementById('edit-visit-date').value = patient.visitDate;
+    document.getElementById('edit-patient-name').value = patient.patientName;
+    document.getElementById('edit-file-number').value = patient.fileNumber;
+    document.getElementById('edit-patient-type').value = patient.patientType;
+    document.getElementById('edit-price').value = patient.price;
+    document.getElementById('edit-discount').value = patient.discount || '';
+    document.getElementById('edit-final-amount').value = patient.finalAmount;
+    
+    // Handle patient type specific fields
+    if (patient.patientType === 'insurance') {
+        document.getElementById('edit-insurance-company-row').style.display = 'block';
+        document.getElementById('edit-discount-row').style.display = 'block';
+        populateEditInsuranceDropdown();
+        document.getElementById('edit-insurance-company').value = patient.insuranceCompany;
+        populateEditProcedureDropdown('insurance', patient.insuranceCompany);
+    } else {
+        document.getElementById('edit-insurance-company-row').style.display = 'none';
+        document.getElementById('edit-discount-row').style.display = 'none';
+        populateEditProcedureDropdown('cash');
+    }
+    
+    // Set the procedure after populating the dropdown
+    setTimeout(() => {
+        document.getElementById('edit-procedure').value = patient.procedure;
+    }, 100);
+    
+    // Show the modal
+    document.getElementById('edit-modal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('active');
+}
+
+function populateEditInsuranceDropdown() {
+    const select = document.getElementById('edit-insurance-company');
+    select.innerHTML = '<option value="">Select insurance company</option>';
+    
+    insuranceCompanies.forEach(company => {
+        const option = document.createElement('option');
+        option.value = company.name;
+        option.textContent = company.name;
+        select.appendChild(option);
+    });
+}
+
+function populateEditProcedureDropdown(type, companyName) {
+    const select = document.getElementById('edit-procedure');
+    select.innerHTML = '<option value="">Select procedure</option>';
+    
+    let procedures = [];
+    if (type === 'cash') {
+        procedures = cashProcedures;
+    } else if (type === 'insurance' && companyName) {
+        const normName = normalizeCompanyName(companyName);
+        procedures = insuranceProcedures[normName] || [];
+    }
+    
+    procedures.forEach(proc => {
+        const option = document.createElement('option');
+        option.value = proc.procedure;
+        option.textContent = proc.procedure;
+        select.appendChild(option);
+    });
+}
+
+function updateEditPriceFields() {
+    const type = document.getElementById('edit-patient-type').value;
+    const procedure = document.getElementById('edit-procedure').value;
+    
+    let price = '';
+    let discount = '';
+    let finalAmount = '';
+    
+    // Only populate price fields if a procedure is actually selected
+    if (procedure && type === 'cash') {
+        const proc = cashProcedures.find(p => p.procedure === procedure);
+        price = proc ? proc.price : '';
+        discount = '';
+        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
+    } else if (procedure && type === 'insurance') {
+        const company = document.getElementById('edit-insurance-company').value;
+        const normName = normalizeCompanyName(company);
+        const proc = insuranceProcedures[normName]?.find(p => p.procedure === procedure);
+        price = proc ? proc.price : '';
+        discount = proc ? proc.discount : '';
+        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
+    }
+    
+    document.getElementById('edit-price').value = price !== undefined && price !== null ? price : '';
+    document.getElementById('edit-discount').value = discount !== undefined && discount !== null ? discount : '';
+    document.getElementById('edit-final-amount').value = (finalAmount !== undefined && finalAmount !== null && !isNaN(finalAmount)) ? String(finalAmount) : '';
+}
+
+function handleEditFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const patientId = parseInt(formData.get('patient-id'));
+    
+    // Find the patient to update
+    const patientIndex = patientLogs.findIndex(log => log.id === patientId);
+    if (patientIndex === -1) {
+        showError('Patient record not found!');
+        return;
+    }
+    
+    // Update the patient record
+    patientLogs[patientIndex] = {
+        id: patientId,
+        visitDate: formData.get('visit-date'),
+        patientName: formData.get('patient-name'),
+        fileNumber: formData.get('file-number'),
+        patientType: formData.get('patient-type'),
+        insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
+        procedure: formData.get('procedure'),
+        price: Number(formData.get('price')),
+        discount: Number(formData.get('discount')) || 0,
+        finalAmount: Number(formData.get('final-amount'))
+    };
+    
+    localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
+    
+    showSuccess('Patient record updated successfully!');
+    closeEditModal();
+    updateStats();
+    renderPatientTable();
+}
+
+function handleEditPatientTypeChange(e) {
+    const type = e.target.value;
+    if (type === 'insurance') {
+        document.getElementById('edit-insurance-company-row').style.display = 'block';
+        document.getElementById('edit-discount-row').style.display = 'block';
+        populateEditInsuranceDropdown();
+        clearEditProcedureDropdown();
+    } else if (type === 'cash') {
+        document.getElementById('edit-insurance-company-row').style.display = 'none';
+        document.getElementById('edit-discount-row').style.display = 'none';
+        populateEditProcedureDropdown('cash');
+    } else {
+        document.getElementById('edit-insurance-company-row').style.display = 'none';
+        document.getElementById('edit-discount-row').style.display = 'none';
+        clearEditProcedureDropdown();
+    }
+}
+
+function handleEditInsuranceCompanyChange(e) {
+    populateEditProcedureDropdown('insurance', e.target.value);
+}
+
+function clearEditProcedureDropdown() {
+    const select = document.getElementById('edit-procedure');
+    select.innerHTML = '<option value="">Select procedure</option>';
+    
+    // Clear price fields
+    document.getElementById('edit-price').value = '';
+    document.getElementById('edit-discount').value = '';
+    document.getElementById('edit-final-amount').value = '';
 }
 
 // --- CHARTS ---

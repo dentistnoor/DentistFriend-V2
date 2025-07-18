@@ -329,6 +329,101 @@
         </main>
     </div>
 
+    <!-- Edit Patient Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Patient Record</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            
+            <form id="edit-patient-form" class="edit-form">
+                <input type="hidden" id="edit-patient-id" name="patient-id">
+                
+                <!-- Visit Date and Patient Type Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-visit-date">Visit Date</label>
+                        <input type="date" id="edit-visit-date" name="visit-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-patient-type">Patient Type</label>
+                        <select id="edit-patient-type" name="patient-type" required>
+                            <option value="">Select patient type</option>
+                            <option value="cash">Cash</option>
+                            <option value="insurance">Insurance</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Patient Name and File Number Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-patient-name">Patient Name</label>
+                        <input type="text" id="edit-patient-name" name="patient-name" required placeholder="Enter patient name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-file-number">File Number</label>
+                        <input type="text" id="edit-file-number" name="file-number" required placeholder="Enter file number">
+                    </div>
+                </div>
+                
+                <!-- Insurance Company Row (full width when visible) -->
+                <div class="form-row-single">
+                    <div class="form-group" id="edit-insurance-company-row" style="display:none;">
+                        <label for="edit-insurance-company">Insurance Company</label>
+                        <select id="edit-insurance-company" name="insurance-company">
+                            <option value="">Select insurance company</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Procedure Row (full width) -->
+                <div class="form-row-single">
+                    <div class="form-group">
+                        <label for="edit-procedure">Procedure</label>
+                        <select id="edit-procedure" name="procedure" required>
+                            <option value="">Select procedure</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Price Information Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-price">Price (SAR)</label>
+                        <input type="number" id="edit-price" name="price" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-final-amount">Final Amount (SAR)</label>
+                        <input type="number" id="edit-final-amount" name="final-amount" required step="any">
+                    </div>
+                </div>
+                
+                <!-- Discount Row (hidden by default, shown for insurance) -->
+                <div class="form-row-single">
+                    <div class="form-group" id="edit-discount-row" style="display:none;">
+                        <label for="edit-discount">Discount (%)</label>
+                        <input type="number" id="edit-discount" name="discount" readonly>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <span>Update Patient</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6L9 17l-5-5"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="../js/dashboard.js"></script>
 </body>
 </html>
