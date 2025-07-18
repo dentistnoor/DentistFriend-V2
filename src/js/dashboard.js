@@ -200,6 +200,14 @@ function normalizeCompanyName(name) {
     return name.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+function formatDateToDDMMYYYY(dateString) {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
 // --- UI FUNCTIONS ---
 function setupEventListeners() {
     // Tab navigation
@@ -754,7 +762,7 @@ function renderPatientTable() {
     logsToShow.forEach(log => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${new Date(log.visitDate).toLocaleDateString()}</td>
+            <td>${formatDateToDDMMYYYY(log.visitDate)}</td>
             <td>${log.patientName}</td>
             <td>${log.fileNumber}</td>
             <td><span class="badge ${log.patientType}">${log.patientType}</span></td>
