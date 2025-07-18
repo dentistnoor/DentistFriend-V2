@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentistFriend - Record Manager</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦷</text></svg>">
+    <link rel="stylesheet" href="../css/login.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="logo-section">
+                <div class="logo">🦷</div>
+                <h1>DentistFriend</h1>
+                <h2>Record Manager</h2>
+                <p>Your smart dental practice companion</p>
+            </div>
+            
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="doctor-name">Doctor Name</label>
+                    <input type="text" id="doctor-name" name="doctor-name" required placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="doctor-email">Email Address</label>
+                    <input type="email" id="doctor-email" name="doctor-email" required placeholder="Enter your email">
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <span>Continue to Dashboard</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="../js/login.js"></script>
+</body>
+</html>

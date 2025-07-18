@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentistFriend - Record Manager</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦷</text></svg>">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">🦷</div>
+                <div class="title-section">
+                    <h1>DentistFriend</h1>
+                    <span class="subtitle">Record Manager</span>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="user-info">
+                    <span class="greeting">Hello, Dr. <span id="doctor-name">Doctor</span></span>
+                    <span class="user-email" id="doctor-email">doctor@example.com</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16,17 21,12 16,7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="patients">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Patients</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="analytics">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+                    </svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="page-header">
+                    <h2>Dashboard Overview</h2>
+                    <p>Manage your dental practice efficiently</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-content">
+                            <h3 id="total-patients">0</h3>
+                            <p>Total Patients</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3 id="cash-patients">0</h3>
+                            <p>Cash Patients</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏥</div>
+                        <div class="stat-content">
+                            <h3 id="insurance-patients">0</h3>
+                            <p>Insurance Patients</p>
+                        </div>
+                    </div>
+                    <div class="stat-card collection-card">
+                        <div class="stat-icon">💸</div>
+                        <div class="stat-content">
+                            <h3 id="total-collection">SAR 0.00</h3>
+                            <p>Total Collection</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Form -->
+                <div class="form-section">
+                    <div class="form-header">
+                        <h3>Add New Patient</h3>
+                        <p>Enter patient details and procedure information</p>
+                    </div>
+                    
+                    <form id="patient-form" class="patient-form">
+                        <!-- Visit Date and Patient Type Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="visit-date">Visit Date</label>
+                                <input type="date" id="visit-date" name="visit-date" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="patient-type">Patient Type</label>
+                                <select id="patient-type" name="patient-type" required>
+                                    <option value="">Select patient type</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="insurance">Insurance</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Patient Name and File Number Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patient-name">Patient Name</label>
+                                <input type="text" id="patient-name" name="patient-name" required placeholder="Enter patient name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="file-number">File Number</label>
+                                <input type="text" id="file-number" name="file-number" required placeholder="Enter file number">
+                            </div>
+                        </div>
+                        
+                        <!-- Insurance Company Row (full width when visible) -->
+                        <div class="form-row-single">
+                            <div class="form-group" id="insurance-company-row" style="display:none;">
+                                <label for="insurance-company">Insurance Company</label>
+                                <select id="insurance-company" name="insurance-company">
+                                    <option value="">Select insurance company</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Procedure Row (full width) -->
+                        <div class="form-row-single">
+                            <div class="form-group">
+                                <label for="procedure">Procedure</label>
+                                <select id="procedure" name="procedure" required>
+                                    <option value="">Select procedure</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Price Information Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="price">Price (SAR)</label>
+                                <input type="number" id="price" name="price" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="final-amount">Final Amount (SAR)</label>
+                                <input type="number" id="final-amount" name="final-amount" required step="any">
+                            </div>
+                        </div>
+                        
+                        <!-- Discount Row (hidden by default, shown for insurance) -->
+                        <div class="form-row-single">
+                            <div class="form-group" id="discount-row" style="display:none;">
+                                <label for="discount">Discount (%)</label>
+                                <input type="number" id="discount" name="discount" readonly>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">
+                            <span>Add Patient</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Patients Tab -->
+            <div id="patients" class="tab-content">
+                <div class="page-header">
+                    <h2>Patient Records</h2>
+                    <p>View and manage all patient records</p>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="search-section">
+                    <div class="search-bar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" id="search-patients" placeholder="Search patients by name, file number, or procedure...">
+                    </div>
+                    
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="cash">Cash</button>
+                        <button class="filter-btn" data-filter="insurance">Insurance</button>
+                    </div>
+                </div>
+
+                <!-- Patient Table -->
+                <div class="table-container">
+                    <table id="patients-table" class="patients-table">
+                        <thead>
+                            <tr>
+                                <th>Visit Date</th>
+                                <th>Patient Name</th>
+                                <th>File Number</th>
+                                <th>Type</th>
+                                <th>Insurance</th>
+                                <th>Procedure</th>
+                                <th>Price</th>
+                                <th>Discount</th>
+                                <th>Final Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Patient records will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-content">
+                <div class="page-header">
+                    <h2>Analytics & Reports</h2>
+                    <p>Visualize your practice data and trends</p>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Patient Type Distribution</h3>
+                        </div>
+                        <canvas id="patientTypeChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Revenue Trend</h3>
+                        </div>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Popular Procedures</h3>
+                        </div>
+                        <canvas id="procedureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                    <p>Manage your account and application preferences</p>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Doctor Profile</h3>
+                            <p>Update your personal information</p>
+                        </div>
+                        
+                        <form id="settings-form" class="settings-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="settings-doctor-name">Doctor Name</label>
+                                    <input type="text" id="settings-doctor-name" name="doctor-name" required placeholder="Enter doctor name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="settings-doctor-email">Email Address</label>
+                                    <input type="email" id="settings-doctor-email" name="doctor-email" required placeholder="Enter email address">
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 6L9 17l-5-5"/>
+                                    </svg>
+                                    <span>Save Changes</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>
