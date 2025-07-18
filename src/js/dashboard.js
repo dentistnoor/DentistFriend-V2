@@ -216,6 +216,10 @@ function setupEventListeners() {
     document.getElementById('patient-type').addEventListener('change', handlePatientTypeChange);
     document.getElementById('insurance-company').addEventListener('change', handleInsuranceCompanyChange);
     document.getElementById('procedure').addEventListener('change', updatePriceFields);
+    
+    // Add event listeners for price and discount fields to calculate final amount
+    document.getElementById('price').addEventListener('input', calculateFinalAmount);
+    document.getElementById('discount').addEventListener('input', calculateFinalAmount);
 
     // Search functionality
     document.getElementById('search-patients').addEventListener('input', handleSearch);
@@ -285,20 +289,25 @@ function handleFormSubmit(e) {
 
 function handlePatientTypeChange(e) {
     const type = e.target.value;
+    const discountField = document.getElementById('discount');
+    
     if (type === 'insurance') {
         document.getElementById('insurance-company-row').style.display = 'block';
         document.getElementById('discount-row').style.display = 'block';
+        discountField.readOnly = true; // Make discount readonly for insurance
         populateInsuranceDropdown();
         // Don't populate procedure dropdown until insurance company is selected
         clearProcedureDropdown();
     } else if (type === 'cash') {
         document.getElementById('insurance-company-row').style.display = 'none';
-        document.getElementById('discount-row').style.display = 'none';
+        document.getElementById('discount-row').style.display = 'block';
+        discountField.readOnly = false; // Make discount editable for cash
         populateProcedureDropdown('cash');
     } else {
         // No patient type selected - clear everything
         document.getElementById('insurance-company-row').style.display = 'none';
         document.getElementById('discount-row').style.display = 'none';
+        discountField.readOnly = false; // Reset readonly state
         clearProcedureDropdown();
     }
 }
@@ -402,6 +411,33 @@ function updatePriceFields() {
     document.getElementById('price').value = price !== undefined && price !== null ? price : '';
     document.getElementById('discount').value = discount !== undefined && discount !== null ? discount : '';
     document.getElementById('final-amount').value = (finalAmount !== undefined && finalAmount !== null && !isNaN(finalAmount)) ? String(finalAmount) : '';
+    
+    // For cash patients, trigger calculation after setting fields
+    if (type === 'cash') {
+        calculateFinalAmount();
+    }
+}
+
+function calculateFinalAmount() {
+    const type = document.getElementById('patient-type').value;
+    
+    // Only auto-calculate for cash patients
+    if (type === 'cash') {
+        const priceField = document.getElementById('price');
+        const discountField = document.getElementById('discount');
+        const finalAmountField = document.getElementById('final-amount');
+        
+        const price = parseFloat(priceField.value) || 0;
+        const discount = parseFloat(discountField.value) || 0;
+        
+        if (price > 0) {
+            const discountAmount = (price * discount) / 100;
+            const finalAmount = price - discountAmount;
+            finalAmountField.value = finalAmount.toFixed(2);
+        } else {
+            finalAmountField.value = '';
+        }
+    }
 }
 
 // --- RENDERING ---

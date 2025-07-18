@@ -176,20 +176,20 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="price">Price (SAR)</label>
-                                <input type="number" id="price" name="price" readonly>
+                                <input type="number" id="price" name="price" step="any" placeholder="Enter price">
                             </div>
                             
                             <div class="form-group">
                                 <label for="final-amount">Final Amount (SAR)</label>
-                                <input type="number" id="final-amount" name="final-amount" required step="any">
+                                <input type="number" id="final-amount" name="final-amount" required step="any" placeholder="Enter final amount">
                             </div>
                         </div>
                         
-                        <!-- Discount Row (hidden by default, shown for insurance) -->
+                        <!-- Discount Row (hidden by default, editable for cash, readonly for insurance) -->
                         <div class="form-row-single">
                             <div class="form-group" id="discount-row" style="display:none;">
                                 <label for="discount">Discount (%)</label>
-                                <input type="number" id="discount" name="discount" readonly>
+                                <input type="number" id="discount" name="discount" step="any" min="0" max="100" placeholder="Enter discount percentage">
                             </div>
                         </div>
                         
