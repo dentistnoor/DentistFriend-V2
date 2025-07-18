@@ -40,6 +40,32 @@ body {
     gap: 12px;
 }
 
+.sidebar-toggle {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #2f3828;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle:hover {
+    background: #f9fafb;
+    color: #010826;
+}
+
+.sidebar-toggle svg {
+    transition: transform 0.2s ease;
+}
+
+.sidebar-toggle:hover svg {
+    transform: scale(1.1);
+}
+
 .logo {
     font-size: 32px;
 }
@@ -120,6 +146,25 @@ body {
     height: calc(100vh - 70px);
     overflow-y: auto;
     box-shadow: 2px 0 10px rgba(1, 8, 38, 0.05);
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar.collapsed .nav-menu {
+    padding: 0 8px;
+}
+
+.sidebar.collapsed .nav-item span {
+    display: none;
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 12px;
 }
 
 .nav-menu {
@@ -166,6 +211,12 @@ body {
     padding: 32px;
     max-width: calc(100vw - 250px);
     overflow-x: hidden;
+    transition: all 0.3s ease;
+}
+
+.main-content.sidebar-collapsed {
+    margin-left: 70px;
+    max-width: calc(100vw - 70px);
 }
 
 .tab-content {
@@ -1153,6 +1204,48 @@ body {
     .btn-primary {
         width: 100%;
         justify-content: center;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1001;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        max-width: 100vw;
+    }
+    
+    .main-content.sidebar-collapsed {
+        margin-left: 0;
+        max-width: 100vw;
+    }
+    
+    /* Mobile overlay */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
     }
 }
 

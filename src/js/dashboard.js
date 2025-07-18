@@ -223,6 +223,9 @@ function setupEventListeners() {
     
     // Enhanced date picker functionality
     setupDatePicker();
+    
+    // Sidebar toggle functionality
+    setupSidebarToggle();
 
     // Edit form
     document.getElementById('edit-patient-form').addEventListener('submit', handleEditFormSubmit);
@@ -477,6 +480,94 @@ function calculateFinalAmount() {
             finalAmountField.value = finalAmount.toFixed(2);
         } else {
             finalAmountField.value = '';
+        }
+    }
+}
+
+function setupSidebarToggle() {
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    
+    // Check if mobile
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+    
+    // Load saved sidebar state (only for desktop)
+    if (!isMobile()) {
+        const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (sidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('sidebar-collapsed');
+        }
+    }
+    
+    // Toggle sidebar on button click
+    sidebarToggle.addEventListener('click', toggleSidebar);
+    
+    // Close sidebar when clicking overlay (mobile)
+    sidebarOverlay.addEventListener('click', closeMobileSidebar);
+    
+    // Handle window resize
+    window.addEventListener('resize', handleResize);
+    
+    function toggleSidebar() {
+        if (isMobile()) {
+            toggleMobileSidebar();
+        } else {
+            toggleDesktopSidebar();
+        }
+    }
+    
+    function toggleMobileSidebar() {
+        const isOpen = sidebar.classList.contains('mobile-open');
+        
+        if (isOpen) {
+            closeMobileSidebar();
+        } else {
+            sidebar.classList.add('mobile-open');
+            sidebarOverlay.classList.add('show');
+        }
+    }
+    
+    function closeMobileSidebar() {
+        sidebar.classList.remove('mobile-open');
+        sidebarOverlay.classList.remove('show');
+    }
+    
+    function toggleDesktopSidebar() {
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('sidebar-collapsed');
+            localStorage.setItem('sidebarCollapsed', 'false');
+        } else {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('sidebar-collapsed');
+            localStorage.setItem('sidebarCollapsed', 'true');
+        }
+    }
+    
+    function handleResize() {
+        // Close mobile sidebar when switching to desktop
+        if (!isMobile()) {
+            closeMobileSidebar();
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('sidebar-collapsed');
+            
+            // Reapply saved state for desktop
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('sidebar-collapsed');
+            }
+        } else {
+            // On mobile, remove desktop classes
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('sidebar-collapsed');
         }
     }
 }

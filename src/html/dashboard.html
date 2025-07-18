@@ -14,6 +14,13 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-section">
+                <button class="sidebar-toggle" id="sidebar-toggle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
                 <div class="logo">🦷</div>
                 <div class="title-section">
                     <h1>DentistFriend</h1>
@@ -37,10 +44,13 @@
     </header>
 
     <div class="main-container">
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+        
         <!-- Sidebar -->
         <aside class="sidebar">
             <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-tab="dashboard">
+                <a href="#" class="nav-item active" data-tab="dashboard" title="Dashboard">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
@@ -49,21 +59,21 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
-                <a href="#" class="nav-item" data-tab="patients">
+                <a href="#" class="nav-item" data-tab="patients" title="Patients">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     <span>Patients</span>
                 </a>
-                <a href="#" class="nav-item" data-tab="analytics">
+                <a href="#" class="nav-item" data-tab="analytics" title="Analytics">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 3v18h18"></path>
                         <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
                     </svg>
                     <span>Analytics</span>
                 </a>
-                <a href="#" class="nav-item" data-tab="settings">
+                <a href="#" class="nav-item" data-tab="settings" title="Settings">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
