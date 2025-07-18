@@ -638,6 +638,113 @@ body {
     background: rgba(1, 8, 38, 0.9);
 }
 
+/* Patients Date Range Filter */
+.patients-filters {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid #d9e0fe;
+    box-shadow: 0 2px 10px rgba(1, 8, 38, 0.05);
+}
+
+.patients-date-range h3 {
+    margin: 0 0 16px 0;
+    color: #010826;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.patients-date-controls {
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.patients-date-inputs {
+    display: flex;
+    gap: 16px;
+}
+
+.patients-date-input {
+    padding: 12px 16px;
+    border: 2px solid #d9e0fe;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f9fafb;
+    color: #2f3828;
+    transition: all 0.2s;
+    min-width: 150px;
+}
+
+.patients-date-input:focus {
+    outline: none;
+    border-color: #010826;
+    box-shadow: 0 0 0 3px rgba(1, 8, 38, 0.1);
+    background: white;
+}
+
+.patients-date-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.patients-preset-btn {
+    padding: 10px 16px;
+    border: 2px solid #d9e0fe;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #2f3828;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.patients-preset-btn:hover {
+    border-color: #010826;
+    color: #010826;
+    background: white;
+}
+
+.patients-preset-btn.active {
+    background: #010826;
+    border-color: #010826;
+    color: white;
+}
+
+.clear-date-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 2px solid #ef4444;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.clear-date-filter:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.clear-date-filter svg {
+    transition: transform 0.2s ease;
+}
+
+.clear-date-filter:hover svg {
+    transform: rotate(90deg);
+}
+
 /* Search Section */
 .search-section {
     background: white;
@@ -1431,5 +1538,30 @@ body {
     
     .summary-card {
         padding: 16px;
+    }
+    
+    /* Patients date range responsive */
+    .patients-date-controls {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .patients-date-inputs {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .patients-date-input {
+        min-width: unset;
+    }
+    
+    .patients-date-presets {
+        justify-content: center;
+    }
+    
+    .clear-date-filter {
+        align-self: center;
+        width: fit-content;
     }
 }

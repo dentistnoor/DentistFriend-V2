@@ -271,6 +271,39 @@
                     <p>View and manage all patient records</p>
                 </div>
 
+                <!-- Date Range Filter for Patients -->
+                <div class="patients-filters">
+                    <div class="patients-date-range">
+                        <h3>Filter by Date Range</h3>
+                        <div class="patients-date-controls">
+                            <div class="patients-date-inputs">
+                                <div class="date-input-group">
+                                    <label for="patients-from-date">From</label>
+                                    <input type="date" id="patients-from-date" class="patients-date-input">
+                                </div>
+                                <div class="date-input-group">
+                                    <label for="patients-to-date">To</label>
+                                    <input type="date" id="patients-to-date" class="patients-date-input">
+                                </div>
+                            </div>
+                            <div class="patients-date-presets">
+                                <button class="patients-preset-btn active" data-range="all">All Dates</button>
+                                <button class="patients-preset-btn" data-range="today">Today</button>
+                                <button class="patients-preset-btn" data-range="7">Last 7 Days</button>
+                                <button class="patients-preset-btn" data-range="30">Last 30 Days</button>
+                                <button class="patients-preset-btn" data-range="90">Last 3 Months</button>
+                            </div>
+                            <button class="clear-date-filter" id="clear-patients-date">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Clear Dates
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Search and Filters -->
                 <div class="search-section">
                     <div class="search-bar">
