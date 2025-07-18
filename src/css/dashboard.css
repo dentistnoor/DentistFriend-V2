@@ -1138,3 +1138,27 @@ body {
         justify-content: center;
     }
 }
+
+/* Search Section Responsive */
+@media (max-width: 768px) {
+    .search-section {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .search-bar {
+        min-width: unset;
+        width: 100%;
+    }
+    
+    .filter-buttons {
+        gap: 6px;
+        justify-content: center;
+    }
+    
+    .filter-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}

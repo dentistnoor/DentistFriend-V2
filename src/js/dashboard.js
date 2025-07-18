@@ -295,12 +295,14 @@ function handleFormSubmit(e) {
     
     showSuccess('Patient record added successfully!');
     e.target.reset();
-    updateStats();
     
     // Reset form state
     document.getElementById('insurance-company-row').style.display = 'none';
     document.getElementById('discount-row').style.display = 'none';
     clearProcedureDropdown(); // Clear procedure dropdown on reset
+    
+    // Auto-refresh after adding patient
+    autoRefreshPatientRecords();
 }
 
 function handlePatientTypeChange(e) {
@@ -349,6 +351,27 @@ function filterPatients(filter) {
         filteredLogs = patientLogs.filter(log => log.patientType === filter);
     }
     renderPatientTable();
+}
+
+function autoRefreshPatientRecords() {
+    // Reload patient logs from localStorage
+    patientLogs = JSON.parse(localStorage.getItem('patientLogs') || '[]');
+    
+    // Reset search and filters
+    document.getElementById('search-patients').value = '';
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector('[data-filter="all"]').classList.add('active');
+    
+    // Reset filtered logs to show all patients
+    filteredLogs = [...patientLogs];
+    
+    // Update stats and re-render table
+    updateStats();
+    renderPatientTable();
+    
+    // No success message for auto-refresh (operation already shows its own message)
 }
 
 // --- DROPDOWN POPULATION ---
@@ -667,9 +690,10 @@ function deletePatient(id) {
     if (confirm('Are you sure you want to delete this patient record?')) {
         patientLogs = patientLogs.filter(log => log.id !== id);
         localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
-        updateStats();
-        renderPatientTable();
         showSuccess('Patient record deleted successfully!');
+        
+        // Auto-refresh after deleting patient
+        autoRefreshPatientRecords();
     }
 }
 
@@ -808,8 +832,9 @@ function handleEditFormSubmit(e) {
     
     showSuccess('Patient record updated successfully!');
     closeEditModal();
-    updateStats();
-    renderPatientTable();
+    
+    // Auto-refresh after editing patient
+    autoRefreshPatientRecords();
 }
 
 function handleEditPatientTypeChange(e) {
