@@ -245,6 +245,9 @@ function setupEventListeners() {
         });
     });
     
+    // Analytics date range controls
+    setupAnalyticsDateRange();
+    
     // Close modal when clicking outside
     document.getElementById('edit-modal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('edit-modal')) {
@@ -270,7 +273,7 @@ function switchTab(tabName) {
     if (tabName === 'patients') {
         renderPatientTable();
     } else if (tabName === 'analytics') {
-        renderCharts();
+        updateAnalytics();
     } else if (tabName === 'settings') {
         setupSettingsTab();
     }
@@ -374,6 +377,12 @@ function autoRefreshPatientRecords() {
     // Update stats and re-render table
     updateStats();
     renderPatientTable();
+    
+    // Update analytics if on analytics tab
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'analytics') {
+        updateAnalytics();
+    }
     
     // No success message for auto-refresh (operation already shows its own message)
 }
@@ -966,6 +975,147 @@ function clearEditProcedureDropdown() {
     document.getElementById('edit-remarks').value = '';
 }
 
+// --- ANALYTICS DATE RANGE ---
+let analyticsDateRange = {
+    from: null,
+    to: null,
+    preset: 'all'
+};
+
+function setupAnalyticsDateRange() {
+    const fromDateInput = document.getElementById('analytics-from-date');
+    const toDateInput = document.getElementById('analytics-to-date');
+    const presetButtons = document.querySelectorAll('.date-preset-btn');
+    
+    // Set default date range (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    // Initialize date inputs
+    fromDateInput.value = getEarliestPatientDate() || thirtyDaysAgo.toISOString().split('T')[0];
+    toDateInput.value = today.toISOString().split('T')[0];
+    
+    // Set initial range
+    analyticsDateRange.from = new Date(fromDateInput.value);
+    analyticsDateRange.to = new Date(toDateInput.value);
+    
+    // Event listeners for manual date inputs
+    fromDateInput.addEventListener('change', updateAnalyticsFromDate);
+    toDateInput.addEventListener('change', updateAnalyticsToDate);
+    
+    // Event listeners for preset buttons
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            presetButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            setDateRangePreset(btn.dataset.range);
+        });
+    });
+    
+    // Initial load with "All Time" preset
+    setDateRangePreset('all');
+}
+
+function getEarliestPatientDate() {
+    if (patientLogs.length === 0) return null;
+    
+    const dates = patientLogs.map(log => new Date(log.visitDate));
+    const earliest = new Date(Math.min(...dates));
+    return earliest.toISOString().split('T')[0];
+}
+
+function updateAnalyticsFromDate() {
+    const fromDate = document.getElementById('analytics-from-date').value;
+    if (fromDate) {
+        analyticsDateRange.from = new Date(fromDate);
+        analyticsDateRange.preset = 'custom';
+        clearPresetButtons();
+        updateAnalytics();
+    }
+}
+
+function updateAnalyticsToDate() {
+    const toDate = document.getElementById('analytics-to-date').value;
+    if (toDate) {
+        analyticsDateRange.to = new Date(toDate);
+        analyticsDateRange.preset = 'custom';
+        clearPresetButtons();
+        updateAnalytics();
+    }
+}
+
+function setDateRangePreset(range) {
+    const today = new Date();
+    const fromDateInput = document.getElementById('analytics-from-date');
+    const toDateInput = document.getElementById('analytics-to-date');
+    
+    analyticsDateRange.preset = range;
+    
+    switch (range) {
+        case 'all':
+            const earliestDate = getEarliestPatientDate();
+            analyticsDateRange.from = earliestDate ? new Date(earliestDate) : new Date(today.getTime() - (365 * 24 * 60 * 60 * 1000));
+            analyticsDateRange.to = today;
+            break;
+        case '7':
+            analyticsDateRange.from = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
+            analyticsDateRange.to = today;
+            break;
+        case '30':
+            analyticsDateRange.from = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+            analyticsDateRange.to = today;
+            break;
+        case '90':
+            analyticsDateRange.from = new Date(today.getTime() - (90 * 24 * 60 * 60 * 1000));
+            analyticsDateRange.to = today;
+            break;
+        case '365':
+            analyticsDateRange.from = new Date(today.getTime() - (365 * 24 * 60 * 60 * 1000));
+            analyticsDateRange.to = today;
+            break;
+    }
+    
+    // Update input fields
+    fromDateInput.value = analyticsDateRange.from.toISOString().split('T')[0];
+    toDateInput.value = analyticsDateRange.to.toISOString().split('T')[0];
+    
+    updateAnalytics();
+}
+
+function clearPresetButtons() {
+    document.querySelectorAll('.date-preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+}
+
+function getFilteredPatientLogs() {
+    if (!analyticsDateRange.from || !analyticsDateRange.to) {
+        return patientLogs;
+    }
+    
+    return patientLogs.filter(log => {
+        const logDate = new Date(log.visitDate);
+        return logDate >= analyticsDateRange.from && logDate <= analyticsDateRange.to;
+    });
+}
+
+function updateAnalytics() {
+    updateAnalyticsSummary();
+    renderCharts();
+}
+
+function updateAnalyticsSummary() {
+    const filteredLogs = getFilteredPatientLogs();
+    
+    const totalPatients = filteredLogs.length;
+    const totalRevenue = filteredLogs.reduce((sum, log) => sum + (log.finalAmount || 0), 0);
+    const avgAmount = totalPatients > 0 ? totalRevenue / totalPatients : 0;
+    
+    document.getElementById('analytics-total-patients').textContent = totalPatients;
+    document.getElementById('analytics-total-revenue').textContent = `SAR ${totalRevenue.toFixed(2)}`;
+    document.getElementById('analytics-avg-amount').textContent = `SAR ${avgAmount.toFixed(2)}`;
+}
+
 // --- CHARTS ---
 function renderCharts() {
     renderPatientTypeChart();
@@ -980,8 +1130,9 @@ function renderPatientTypeChart() {
         charts.patientType.destroy();
     }
     
-    const cashCount = patientLogs.filter(log => log.patientType === 'cash').length;
-    const insuranceCount = patientLogs.filter(log => log.patientType === 'insurance').length;
+    const filteredLogs = getFilteredPatientLogs();
+    const cashCount = filteredLogs.filter(log => log.patientType === 'cash').length;
+    const insuranceCount = filteredLogs.filter(log => log.patientType === 'insurance').length;
     
     charts.patientType = new Chart(ctx, {
         type: 'doughnut',
@@ -1019,9 +1170,11 @@ function renderRevenueChart() {
         charts.revenue.destroy();
     }
     
+    const filteredLogs = getFilteredPatientLogs();
+    
     // Group revenue by month
     const monthlyRevenue = {};
-    patientLogs.forEach(log => {
+    filteredLogs.forEach(log => {
         const month = new Date(log.visitDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         monthlyRevenue[month] = (monthlyRevenue[month] || 0) + log.finalAmount;
     });
@@ -1083,9 +1236,11 @@ function renderProcedureChart() {
         charts.procedure.destroy();
     }
     
+    const filteredLogs = getFilteredPatientLogs();
+    
     // Count procedures
     const procedureCount = {};
-    patientLogs.forEach(log => {
+    filteredLogs.forEach(log => {
         procedureCount[log.procedure] = (procedureCount[log.procedure] || 0) + 1;
     });
     

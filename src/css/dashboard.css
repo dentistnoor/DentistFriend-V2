@@ -762,6 +762,138 @@ body {
     cursor: help;
 }
 
+/* Analytics Filters */
+.analytics-filters {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid #d9e0fe;
+    box-shadow: 0 2px 10px rgba(1, 8, 38, 0.05);
+}
+
+.date-range-section h3 {
+    margin: 0 0 16px 0;
+    color: #010826;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.date-range-controls {
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.date-inputs {
+    display: flex;
+    gap: 16px;
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.date-input-group label {
+    font-weight: 600;
+    color: #010826;
+    font-size: 14px;
+}
+
+.analytics-date-input {
+    padding: 12px 16px;
+    border: 2px solid #d9e0fe;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f9fafb;
+    color: #2f3828;
+    transition: all 0.2s;
+    min-width: 150px;
+}
+
+.analytics-date-input:focus {
+    outline: none;
+    border-color: #010826;
+    box-shadow: 0 0 0 3px rgba(1, 8, 38, 0.1);
+    background: white;
+}
+
+.date-range-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.date-preset-btn {
+    padding: 10px 16px;
+    border: 2px solid #d9e0fe;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #2f3828;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.date-preset-btn:hover {
+    border-color: #010826;
+    color: #010826;
+    background: white;
+}
+
+.date-preset-btn.active {
+    background: #010826;
+    border-color: #010826;
+    color: white;
+}
+
+.analytics-summary {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #d9e0fe;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.summary-card {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.summary-icon {
+    font-size: 28px;
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #d9e0fe;
+}
+
+.summary-content h4 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #010826;
+    line-height: 1.2;
+}
+
+.summary-content p {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
 /* Charts */
 .charts-grid {
     display: grid;
@@ -1270,5 +1402,34 @@ body {
     .filter-btn {
         padding: 8px 12px;
         font-size: 13px;
+    }
+    
+    /* Analytics responsive */
+    .date-range-controls {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .date-inputs {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .analytics-date-input {
+        min-width: unset;
+    }
+    
+    .date-range-presets {
+        justify-content: center;
+    }
+    
+    .analytics-summary {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .summary-card {
+        padding: 16px;
     }
 }

@@ -320,6 +320,57 @@
                     <p>Visualize your practice data and trends</p>
                 </div>
 
+                <!-- Date Range Filter -->
+                <div class="analytics-filters">
+                    <div class="date-range-section">
+                        <h3>Date Range</h3>
+                        <div class="date-range-controls">
+                            <div class="date-inputs">
+                                <div class="date-input-group">
+                                    <label for="analytics-from-date">From</label>
+                                    <input type="date" id="analytics-from-date" class="analytics-date-input">
+                                </div>
+                                <div class="date-input-group">
+                                    <label for="analytics-to-date">To</label>
+                                    <input type="date" id="analytics-to-date" class="analytics-date-input">
+                                </div>
+                            </div>
+                            <div class="date-range-presets">
+                                <button class="date-preset-btn active" data-range="all">All Time</button>
+                                <button class="date-preset-btn" data-range="7">Last 7 Days</button>
+                                <button class="date-preset-btn" data-range="30">Last 30 Days</button>
+                                <button class="date-preset-btn" data-range="90">Last 3 Months</button>
+                                <button class="date-preset-btn" data-range="365">Last Year</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Stats -->
+                    <div class="analytics-summary">
+                        <div class="summary-card">
+                            <div class="summary-icon">👥</div>
+                            <div class="summary-content">
+                                <h4 id="analytics-total-patients">0</h4>
+                                <p>Patients in Period</p>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon">💰</div>
+                            <div class="summary-content">
+                                <h4 id="analytics-total-revenue">SAR 0.00</h4>
+                                <p>Total Revenue</p>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon">📊</div>
+                            <div class="summary-content">
+                                <h4 id="analytics-avg-amount">SAR 0.00</h4>
+                                <p>Average Amount</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="charts-grid">
                     <div class="chart-card">
                         <div class="chart-header">
