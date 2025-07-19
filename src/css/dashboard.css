@@ -614,6 +614,148 @@ body {
     }
 }
 
+/* Responsive procedures section */
+@media (max-width: 768px) {
+    .procedure-fields {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .procedures-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .add-procedure-btn {
+        align-self: flex-end;
+    }
+}
+
+/* Procedures Section */
+.procedures-section {
+    margin-bottom: 24px;
+}
+
+.procedures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.procedures-header label {
+    font-weight: 600;
+    color: #010826;
+    font-size: 16px;
+}
+
+.add-procedure-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.add-procedure-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.procedures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.procedure-item {
+    background: #f9fafb;
+    border: 2px solid #d9e0fe;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+}
+
+.procedure-item-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.procedure-number {
+    font-weight: 600;
+    color: #010826;
+    font-size: 14px;
+}
+
+.remove-procedure-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+}
+
+.remove-procedure-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.procedure-fields {
+    display: grid;
+    grid-template-columns: 1fr 120px 120px 120px;
+    gap: 16px;
+    align-items: end;
+}
+
+.procedure-discount-row {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+}
+
+.total-amount-row {
+    background: #f0f9ff;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.total-amount-row .form-group label {
+    color: #1e40af;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.total-amount-row input {
+    background: white;
+    border-color: #3b82f6;
+    font-weight: 600;
+    font-size: 16px;
+    color: #1e40af;
+}
+
 .submit-btn {
     background: #010826;
     color: white;

@@ -9,6 +9,8 @@ let insuranceProcedures = {};
 let patientLogs = [];
 let filteredLogs = [];
 let charts = {};
+let procedureCounter = 0;
+let editProcedureCounter = 0;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', function() {
@@ -223,11 +225,9 @@ function setupEventListeners() {
     document.getElementById('patient-form').addEventListener('submit', handleFormSubmit);
     document.getElementById('patient-type').addEventListener('change', handlePatientTypeChange);
     document.getElementById('insurance-company').addEventListener('change', handleInsuranceCompanyChange);
-    document.getElementById('procedure').addEventListener('change', updatePriceFields);
     
-    // Add event listeners for price and discount fields to calculate final amount
-    document.getElementById('price').addEventListener('input', calculateFinalAmount);
-    document.getElementById('discount').addEventListener('input', calculateFinalAmount);
+    // Procedures management
+    document.getElementById('add-procedure-btn').addEventListener('click', addProcedureItem);
     
     // Enhanced date picker functionality
     setupDatePicker();
@@ -239,7 +239,9 @@ function setupEventListeners() {
     document.getElementById('edit-patient-form').addEventListener('submit', handleEditFormSubmit);
     document.getElementById('edit-patient-type').addEventListener('change', handleEditPatientTypeChange);
     document.getElementById('edit-insurance-company').addEventListener('change', handleEditInsuranceCompanyChange);
-    document.getElementById('edit-procedure').addEventListener('change', updateEditPriceFields);
+    
+    // Edit procedures management
+    document.getElementById('edit-add-procedure-btn').addEventListener('click', () => addEditProcedureItem());
 
     // Search functionality
     document.getElementById('search-patients').addEventListener('input', handleSearch);
@@ -293,10 +295,323 @@ function switchTab(tabName) {
     }
 }
 
+// --- PROCEDURES MANAGEMENT ---
+function addProcedureItem() {
+    procedureCounter++;
+    const proceduresList = document.getElementById('procedures-list');
+    const patientType = document.getElementById('patient-type').value;
+    
+    if (!patientType) {
+        showError('Please select patient type first');
+        return;
+    }
+    
+    const procedureItem = document.createElement('div');
+    procedureItem.className = 'procedure-item';
+    procedureItem.dataset.procedureId = procedureCounter;
+    
+    procedureItem.innerHTML = `
+        <div class="procedure-item-header">
+            <span class="procedure-number">Procedure ${procedureCounter}</span>
+        </div>
+        <button type="button" class="remove-procedure-btn" onclick="removeProcedureItem(${procedureCounter})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div class="procedure-fields">
+            <div class="form-group">
+                <label for="procedure-${procedureCounter}">Procedure</label>
+                <select id="procedure-${procedureCounter}" name="procedure-${procedureCounter}" required onchange="updateProcedureFields(${procedureCounter})">
+                    <option value="">Select procedure</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="price-${procedureCounter}">Price (SAR)</label>
+                <input type="number" id="price-${procedureCounter}" name="price-${procedureCounter}" step="any" readonly>
+            </div>
+            <div class="form-group">
+                <label for="discount-${procedureCounter}">Discount (%)</label>
+                <input type="number" id="discount-${procedureCounter}" name="discount-${procedureCounter}" 
+                       step="any" min="0" max="100" onchange="calculateProcedureAmount(${procedureCounter})" 
+                       ${patientType === 'insurance' ? 'readonly' : ''}>
+            </div>
+            <div class="form-group">
+                <label for="final-amount-${procedureCounter}">Final Amount (SAR)</label>
+                <input type="number" id="final-amount-${procedureCounter}" name="final-amount-${procedureCounter}" step="any" readonly>
+            </div>
+        </div>
+    `;
+    
+    proceduresList.appendChild(procedureItem);
+    populateProcedureDropdown(patientType, document.getElementById('insurance-company').value, procedureCounter);
+    updateTotalAmount();
+}
+
+function removeProcedureItem(procedureId) {
+    const procedureItem = document.querySelector(`[data-procedure-id="${procedureId}"]`);
+    if (procedureItem) {
+        procedureItem.remove();
+        updateTotalAmount();
+        
+        // Renumber remaining procedures
+        const remainingProcedures = document.querySelectorAll('.procedure-item');
+        remainingProcedures.forEach((item, index) => {
+            const newNumber = index + 1;
+            const numberSpan = item.querySelector('.procedure-number');
+            if (numberSpan) {
+                numberSpan.textContent = `Procedure ${newNumber}`;
+            }
+        });
+    }
+}
+
+function addEditProcedureItem() {
+    editProcedureCounter++;
+    const proceduresList = document.getElementById('edit-procedures-list');
+    const patientType = document.getElementById('edit-patient-type').value;
+    
+    if (!patientType) {
+        showError('Please select patient type first');
+        return;
+    }
+    
+    const procedureItem = document.createElement('div');
+    procedureItem.className = 'procedure-item';
+    procedureItem.dataset.procedureId = editProcedureCounter;
+    
+    procedureItem.innerHTML = `
+        <div class="procedure-item-header">
+            <span class="procedure-number">Procedure ${editProcedureCounter}</span>
+        </div>
+        <button type="button" class="remove-procedure-btn" onclick="removeEditProcedureItem(${editProcedureCounter})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div class="procedure-fields">
+            <div class="form-group">
+                <label for="edit-procedure-${editProcedureCounter}">Procedure</label>
+                <select id="edit-procedure-${editProcedureCounter}" name="edit-procedure-${editProcedureCounter}" required onchange="updateEditProcedureFields(${editProcedureCounter})">
+                    <option value="">Select procedure</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit-price-${editProcedureCounter}">Price (SAR)</label>
+                <input type="number" id="edit-price-${editProcedureCounter}" name="edit-price-${editProcedureCounter}" step="any" readonly>
+            </div>
+            <div class="form-group">
+                <label for="edit-discount-${editProcedureCounter}">Discount (%)</label>
+                <input type="number" id="edit-discount-${editProcedureCounter}" name="edit-discount-${editProcedureCounter}" 
+                       step="any" min="0" max="100" onchange="calculateEditProcedureAmount(${editProcedureCounter})"
+                       ${patientType === 'insurance' ? 'readonly' : ''}>
+            </div>
+            <div class="form-group">
+                <label for="edit-final-amount-${editProcedureCounter}">Final Amount (SAR)</label>
+                <input type="number" id="edit-final-amount-${editProcedureCounter}" name="edit-final-amount-${editProcedureCounter}" step="any" readonly>
+            </div>
+        </div>
+    `;
+    
+    proceduresList.appendChild(procedureItem);
+    populateEditProcedureDropdown(patientType, document.getElementById('edit-insurance-company').value, editProcedureCounter);
+    updateEditTotalAmount();
+}
+
+function removeEditProcedureItem(procedureId) {
+    const procedureItem = document.querySelector(`#edit-procedures-list [data-procedure-id="${procedureId}"]`);
+    if (procedureItem) {
+        procedureItem.remove();
+        updateEditTotalAmount();
+        
+        // Renumber remaining procedures
+        const remainingProcedures = document.querySelectorAll('#edit-procedures-list .procedure-item');
+        remainingProcedures.forEach((item, index) => {
+            const newNumber = index + 1;
+            const numberSpan = item.querySelector('.procedure-number');
+            if (numberSpan) {
+                numberSpan.textContent = `Procedure ${newNumber}`;
+            }
+        });
+    }
+}
+
+function updateProcedureFields(procedureId) {
+    const type = document.getElementById('patient-type').value;
+    const procedure = document.getElementById(`procedure-${procedureId}`).value;
+    
+    let price = '';
+    let discount = '';
+    let finalAmount = '';
+    
+    if (procedure && type === 'cash') {
+        const proc = cashProcedures.find(p => p.procedure === procedure);
+        price = proc ? proc.price : '';
+        discount = '';
+        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
+    } else if (procedure && type === 'insurance') {
+        const company = document.getElementById('insurance-company').value;
+        const normName = normalizeCompanyName(company);
+        const proc = insuranceProcedures[normName]?.find(p => p.procedure === procedure);
+        price = proc ? proc.price : '';
+        discount = proc ? proc.discount : '';
+        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
+    }
+    
+    document.getElementById(`price-${procedureId}`).value = price !== undefined && price !== null ? price : '';
+    document.getElementById(`discount-${procedureId}`).value = discount !== undefined && discount !== null ? discount : '';
+    document.getElementById(`final-amount-${procedureId}`).value = (finalAmount !== undefined && finalAmount !== null && !isNaN(finalAmount)) ? String(finalAmount) : '';
+    
+    if (type === 'cash') {
+        calculateProcedureAmount(procedureId);
+    }
+    
+    updateTotalAmount();
+}
+
+function updateEditProcedureFields(procedureId) {
+    const type = document.getElementById('edit-patient-type').value;
+    const procedure = document.getElementById(`edit-procedure-${procedureId}`).value;
+    
+    let price = '';
+    let discount = '';
+    let finalAmount = '';
+    
+    if (procedure && type === 'cash') {
+        const proc = cashProcedures.find(p => p.procedure === procedure);
+        price = proc ? proc.price : '';
+        discount = '';
+        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
+    } else if (procedure && type === 'insurance') {
+        const company = document.getElementById('edit-insurance-company').value;
+        const normName = normalizeCompanyName(company);
+        const proc = insuranceProcedures[normName]?.find(p => p.procedure === procedure);
+        price = proc ? proc.price : '';
+        discount = proc ? proc.discount : '';
+        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
+    }
+    
+    document.getElementById(`edit-price-${procedureId}`).value = price !== undefined && price !== null ? price : '';
+    document.getElementById(`edit-discount-${procedureId}`).value = discount !== undefined && discount !== null ? discount : '';
+    document.getElementById(`edit-final-amount-${procedureId}`).value = (finalAmount !== undefined && finalAmount !== null && !isNaN(finalAmount)) ? String(finalAmount) : '';
+    
+    if (type === 'cash') {
+        calculateEditProcedureAmount(procedureId);
+    }
+    
+    updateEditTotalAmount();
+}
+
+function calculateProcedureAmount(procedureId) {
+    const type = document.getElementById('patient-type').value;
+    
+    if (type === 'cash') {
+        const priceField = document.getElementById(`price-${procedureId}`);
+        const discountField = document.getElementById(`discount-${procedureId}`);
+        const finalAmountField = document.getElementById(`final-amount-${procedureId}`);
+        
+        const price = parseFloat(priceField.value) || 0;
+        const discount = parseFloat(discountField.value) || 0;
+        
+        if (price > 0) {
+            const discountAmount = (price * discount) / 100;
+            const finalAmount = price - discountAmount;
+            finalAmountField.value = finalAmount.toFixed(2);
+        } else {
+            finalAmountField.value = '';
+        }
+    }
+    
+    updateTotalAmount();
+}
+
+function calculateEditProcedureAmount(procedureId) {
+    const type = document.getElementById('edit-patient-type').value;
+    
+    if (type === 'cash') {
+        const priceField = document.getElementById(`edit-price-${procedureId}`);
+        const discountField = document.getElementById(`edit-discount-${procedureId}`);
+        const finalAmountField = document.getElementById(`edit-final-amount-${procedureId}`);
+        
+        const price = parseFloat(priceField.value) || 0;
+        const discount = parseFloat(discountField.value) || 0;
+        
+        if (price > 0) {
+            const discountAmount = (price * discount) / 100;
+            const finalAmount = price - discountAmount;
+            finalAmountField.value = finalAmount.toFixed(2);
+        } else {
+            finalAmountField.value = '';
+        }
+    }
+    
+    updateEditTotalAmount();
+}
+
+function updateTotalAmount() {
+    const procedureItems = document.querySelectorAll('#procedures-list .procedure-item');
+    let total = 0;
+    
+    procedureItems.forEach(item => {
+        const procedureId = item.dataset.procedureId;
+        const finalAmountField = document.getElementById(`final-amount-${procedureId}`);
+        const amount = parseFloat(finalAmountField.value) || 0;
+        total += amount;
+    });
+    
+    document.getElementById('total-amount').value = total.toFixed(2);
+}
+
+function updateEditTotalAmount() {
+    const procedureItems = document.querySelectorAll('#edit-procedures-list .procedure-item');
+    let total = 0;
+    
+    procedureItems.forEach(item => {
+        const procedureId = item.dataset.procedureId;
+        const finalAmountField = document.getElementById(`edit-final-amount-${procedureId}`);
+        const amount = parseFloat(finalAmountField.value) || 0;
+        total += amount;
+    });
+    
+    document.getElementById('edit-total-amount').value = total.toFixed(2);
+}
+
 function handleFormSubmit(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
+    const procedureItems = document.querySelectorAll('#procedures-list .procedure-item');
+    
+    if (procedureItems.length === 0) {
+        showError('Please add at least one procedure');
+        return;
+    }
+    
+    const procedures = [];
+    procedureItems.forEach(item => {
+        const procedureId = item.dataset.procedureId;
+        const procedure = document.getElementById(`procedure-${procedureId}`).value;
+        const price = parseFloat(document.getElementById(`price-${procedureId}`).value) || 0;
+        const discount = parseFloat(document.getElementById(`discount-${procedureId}`).value) || 0;
+        const finalAmount = parseFloat(document.getElementById(`final-amount-${procedureId}`).value) || 0;
+        
+        if (procedure && price > 0) {
+            procedures.push({
+                procedure,
+                price,
+                discount,
+                finalAmount
+            });
+        }
+    });
+    
+    if (procedures.length === 0) {
+        showError('Please complete at least one procedure with valid details');
+        return;
+    }
+    
     const log = {
         id: Date.now(),
         visitDate: formData.get('visit-date'),
@@ -306,10 +621,8 @@ function handleFormSubmit(e) {
         gender: formData.get('patient-gender'),
         patientType: formData.get('patient-type'),
         insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
-        procedure: formData.get('procedure'),
-        price: Number(formData.get('price')),
-        discount: Number(formData.get('discount')) || 0,
-        finalAmount: Number(formData.get('final-amount')),
+        procedures: procedures,
+        totalAmount: parseFloat(document.getElementById('total-amount').value) || 0,
         remarks: formData.get('remarks') || ''
     };
     
@@ -321,8 +634,7 @@ function handleFormSubmit(e) {
     
     // Reset form state
     document.getElementById('insurance-company-row').style.display = 'none';
-    document.getElementById('discount-row').style.display = 'none';
-    clearProcedureDropdown(); // Clear procedure dropdown on reset
+    clearAllProcedures();
     
     // Auto-refresh after adding patient
     autoRefreshPatientRecords();
@@ -330,31 +642,34 @@ function handleFormSubmit(e) {
 
 function handlePatientTypeChange(e) {
     const type = e.target.value;
-    const discountField = document.getElementById('discount');
     
     if (type === 'insurance') {
         document.getElementById('insurance-company-row').style.display = 'block';
-        document.getElementById('discount-row').style.display = 'block';
-        discountField.readOnly = true; // Make discount readonly for insurance
         populateInsuranceDropdown();
-        // Don't populate procedure dropdown until insurance company is selected
-        clearProcedureDropdown();
+        clearAllProcedures();
     } else if (type === 'cash') {
         document.getElementById('insurance-company-row').style.display = 'none';
-        document.getElementById('discount-row').style.display = 'block';
-        discountField.readOnly = false; // Make discount editable for cash
-        populateProcedureDropdown('cash');
+        clearAllProcedures();
     } else {
         // No patient type selected - clear everything
         document.getElementById('insurance-company-row').style.display = 'none';
-        document.getElementById('discount-row').style.display = 'none';
-        discountField.readOnly = false; // Reset readonly state
-        clearProcedureDropdown();
+        clearAllProcedures();
     }
 }
 
 function handleInsuranceCompanyChange(e) {
-    populateProcedureDropdown('insurance', e.target.value);
+    // Update all existing procedure dropdowns with the new insurance company
+    const procedureItems = document.querySelectorAll('#procedures-list .procedure-item');
+    procedureItems.forEach(item => {
+        const procedureId = item.dataset.procedureId;
+        populateProcedureDropdown('insurance', e.target.value, procedureId);
+    });
+}
+
+function clearAllProcedures() {
+    document.getElementById('procedures-list').innerHTML = '';
+    document.getElementById('total-amount').value = '0';
+    procedureCounter = 0;
 }
 
 function handleSearch(e) {
@@ -406,8 +721,10 @@ function populateInsuranceDropdown() {
     });
 }
 
-function populateProcedureDropdown(type, companyName) {
-    const select = document.getElementById('procedure');
+function populateProcedureDropdown(type, companyName, procedureId) {
+    const select = document.getElementById(`procedure-${procedureId}`);
+    if (!select) return;
+    
     select.innerHTML = '<option value="">Select procedure</option>';
     
     let procedures = [];
@@ -430,74 +747,31 @@ function populateProcedureDropdown(type, companyName) {
     });
     
     console.log('Populated procedure dropdown with', procedures.length, 'procedures');
-    updatePriceFields();
 }
 
-function clearProcedureDropdown() {
-    const select = document.getElementById('procedure');
+function populateEditProcedureDropdown(type, companyName, procedureId) {
+    const select = document.getElementById(`edit-procedure-${procedureId}`);
+    if (!select) return;
+    
     select.innerHTML = '<option value="">Select procedure</option>';
     
-    // Clear price fields
-    document.getElementById('price').value = '';
-    document.getElementById('discount').value = '';
-    document.getElementById('final-amount').value = '';
-    document.getElementById('remarks').value = '';
+    let procedures = [];
+    if (type === 'cash') {
+        procedures = cashProcedures;
+    } else if (type === 'insurance' && companyName) {
+        const normName = normalizeCompanyName(companyName);
+        procedures = insuranceProcedures[normName] || [];
+    }
+    
+    procedures.forEach(proc => {
+        const option = document.createElement('option');
+        option.value = proc.procedure;
+        option.textContent = proc.procedure;
+        select.appendChild(option);
+    });
 }
 
-function updatePriceFields() {
-    const type = document.getElementById('patient-type').value;
-    const procedure = document.getElementById('procedure').value;
-    
-    let price = '';
-    let discount = '';
-    let finalAmount = '';
-    
-    // Only populate price fields if a procedure is actually selected
-    if (procedure && type === 'cash') {
-        const proc = cashProcedures.find(p => p.procedure === procedure);
-        price = proc ? proc.price : '';
-        discount = '';
-        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
-    } else if (procedure && type === 'insurance') {
-        const company = document.getElementById('insurance-company').value;
-        const normName = normalizeCompanyName(company);
-        const proc = insuranceProcedures[normName]?.find(p => p.procedure === procedure);
-        price = proc ? proc.price : '';
-        discount = proc ? proc.discount : '';
-        finalAmount = proc && typeof proc.finalAmount === 'number' && !isNaN(proc.finalAmount) ? proc.finalAmount : (typeof price === 'number' && !isNaN(price) ? price : '');
-    }
-    
-    document.getElementById('price').value = price !== undefined && price !== null ? price : '';
-    document.getElementById('discount').value = discount !== undefined && discount !== null ? discount : '';
-    document.getElementById('final-amount').value = (finalAmount !== undefined && finalAmount !== null && !isNaN(finalAmount)) ? String(finalAmount) : '';
-    
-    // For cash patients, trigger calculation after setting fields
-    if (type === 'cash') {
-        calculateFinalAmount();
-    }
-}
-
-function calculateFinalAmount() {
-    const type = document.getElementById('patient-type').value;
-    
-    // Only auto-calculate for cash patients
-    if (type === 'cash') {
-        const priceField = document.getElementById('price');
-        const discountField = document.getElementById('discount');
-        const finalAmountField = document.getElementById('final-amount');
-        
-        const price = parseFloat(priceField.value) || 0;
-        const discount = parseFloat(discountField.value) || 0;
-        
-        if (price > 0) {
-            const discountAmount = (price * discount) / 100;
-            const finalAmount = price - discountAmount;
-            finalAmountField.value = finalAmount.toFixed(2);
-        } else {
-            finalAmountField.value = '';
-        }
-    }
-}
+// Legacy functions removed - now using multiple procedures system
 
 function setupSidebarToggle() {
     const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -750,7 +1024,15 @@ function updateStats() {
     const totalPatients = patientLogs.length;
     const cashPatients = patientLogs.filter(log => log.patientType === 'cash').length;
     const insurancePatients = patientLogs.filter(log => log.patientType === 'insurance').length;
-    const totalCollection = patientLogs.reduce((sum, log) => sum + (log.finalAmount || 0), 0);
+    
+    // Handle both new and old data formats
+    const totalCollection = patientLogs.reduce((sum, log) => {
+        if (log.procedures && Array.isArray(log.procedures)) {
+            return sum + (log.totalAmount || log.procedures.reduce((procSum, proc) => procSum + (proc.finalAmount || 0), 0));
+        } else {
+            return sum + (log.finalAmount || 0);
+        }
+    }, 0);
     
     document.getElementById('total-patients').textContent = totalPatients;
     document.getElementById('cash-patients').textContent = cashPatients;
@@ -774,6 +1056,28 @@ function renderPatientTable() {
         const genderClass = log.gender ? log.gender.toLowerCase() : 'unknown';
         const genderText = log.gender ? log.gender.charAt(0).toUpperCase() + log.gender.slice(1) : 'N/A';
         
+        // Handle procedures display (support both old and new format)
+        let proceduresDisplay = '';
+        let totalAmount = 0;
+        
+        if (log.procedures && Array.isArray(log.procedures)) {
+            // New format with multiple procedures - list all procedures with commas and line breaks
+            proceduresDisplay = log.procedures.map((proc, index) => {
+                if (index === log.procedures.length - 1) {
+                    // Last procedure - no comma
+                    return proc.procedure;
+                } else {
+                    // Not last procedure - add comma and line break
+                    return proc.procedure + ',';
+                }
+            }).join('<br>');
+            totalAmount = log.totalAmount || log.procedures.reduce((sum, proc) => sum + (proc.finalAmount || 0), 0);
+        } else {
+            // Old format with single procedure (for backward compatibility)
+            proceduresDisplay = log.procedure || '-';
+            totalAmount = log.finalAmount || 0;
+        }
+        
         row.innerHTML = `
             <td>${formatDateToDDMMYYYY(log.visitDate)}</td>
             <td>${log.patientName}</td>
@@ -782,10 +1086,8 @@ function renderPatientTable() {
             <td><span class="badge ${genderClass}">${genderText}</span></td>
             <td><span class="badge ${log.patientType}">${log.patientType}</span></td>
             <td>${log.insuranceCompany || '-'}</td>
-            <td>${log.procedure}</td>
-            <td>SAR ${log.price}</td>
-            <td>${log.discount ? log.discount + '%' : '-'}</td>
-            <td>SAR ${log.finalAmount}</td>
+            <td title="${getProceduresTooltip(log)}">${proceduresDisplay}</td>
+            <td>SAR ${totalAmount.toFixed(2)}</td>
             <td class="remarks-cell" title="${log.remarks || ''}">${log.remarks ? (log.remarks.length > 50 ? log.remarks.substring(0, 50) + '...' : log.remarks) : '-'}</td>
             <td>
                 <button class="action-btn edit" onclick="editPatient(${log.id})" title="Edit Patient">
@@ -803,6 +1105,14 @@ function renderPatientTable() {
         `;
         tbody.appendChild(row);
     });
+}
+
+function getProceduresTooltip(log) {
+    if (log.procedures && Array.isArray(log.procedures)) {
+        return log.procedures.map(proc => `${proc.procedure} - SAR ${proc.finalAmount.toFixed(2)}`).join('\n');
+    } else {
+        return log.procedure || '';
+    }
 }
 
 function deletePatient(id) {
@@ -824,6 +1134,10 @@ function editPatient(id) {
         return;
     }
     
+    // Reset edit counters and clear existing procedures
+    editProcedureCounter = 0;
+    document.getElementById('edit-procedures-list').innerHTML = '';
+    
     // Populate the edit form
     document.getElementById('edit-patient-id').value = patient.id;
     document.getElementById('edit-visit-date').value = patient.visitDate;
@@ -832,28 +1146,60 @@ function editPatient(id) {
     document.getElementById('edit-patient-age').value = patient.age || '';
     document.getElementById('edit-patient-gender').value = patient.gender || '';
     document.getElementById('edit-patient-type').value = patient.patientType;
-    document.getElementById('edit-price').value = patient.price;
-    document.getElementById('edit-discount').value = patient.discount || '';
-    document.getElementById('edit-final-amount').value = patient.finalAmount;
     document.getElementById('edit-remarks').value = patient.remarks || '';
     
     // Handle patient type specific fields
     if (patient.patientType === 'insurance') {
         document.getElementById('edit-insurance-company-row').style.display = 'block';
-        document.getElementById('edit-discount-row').style.display = 'block';
         populateEditInsuranceDropdown();
         document.getElementById('edit-insurance-company').value = patient.insuranceCompany;
-        populateEditProcedureDropdown('insurance', patient.insuranceCompany);
     } else {
         document.getElementById('edit-insurance-company-row').style.display = 'none';
-        document.getElementById('edit-discount-row').style.display = 'none';
-        populateEditProcedureDropdown('cash');
     }
     
-    // Set the procedure after populating the dropdown
+    // Handle procedures (support both old and new format)
+    if (patient.procedures && Array.isArray(patient.procedures)) {
+        // New format with multiple procedures
+        patient.procedures.forEach(proc => {
+            addEditProcedureItem();
+            const currentId = editProcedureCounter;
+            
+            setTimeout(() => {
+                const select = document.getElementById(`edit-procedure-${currentId}`);
+                if (select) {
+                    select.value = proc.procedure;
+                    updateEditProcedureFields(currentId);
+                    
+                    // Override with actual values from the saved data
+                    document.getElementById(`edit-price-${currentId}`).value = proc.price;
+                    document.getElementById(`edit-discount-${currentId}`).value = proc.discount || '';
+                    document.getElementById(`edit-final-amount-${currentId}`).value = proc.finalAmount;
+                }
+            }, 100);
+        });
+    } else {
+        // Old format with single procedure - convert to new format
+        addEditProcedureItem();
+        const currentId = editProcedureCounter;
+        
+        setTimeout(() => {
+            const select = document.getElementById(`edit-procedure-${currentId}`);
+            if (select) {
+                select.value = patient.procedure;
+                updateEditProcedureFields(currentId);
+                
+                // Override with actual values from the saved data
+                document.getElementById(`edit-price-${currentId}`).value = patient.price;
+                document.getElementById(`edit-discount-${currentId}`).value = patient.discount || '';
+                document.getElementById(`edit-final-amount-${currentId}`).value = patient.finalAmount;
+            }
+        }, 100);
+    }
+    
+    // Update total amount
     setTimeout(() => {
-        document.getElementById('edit-procedure').value = patient.procedure;
-    }, 100);
+        updateEditTotalAmount();
+    }, 200);
     
     // Show the modal
     document.getElementById('edit-modal').classList.add('active');
@@ -990,6 +1336,36 @@ function handleEditFormSubmit(e) {
         return;
     }
     
+    const procedureItems = document.querySelectorAll('#edit-procedures-list .procedure-item');
+    
+    if (procedureItems.length === 0) {
+        showError('Please add at least one procedure');
+        return;
+    }
+    
+    const procedures = [];
+    procedureItems.forEach(item => {
+        const procedureId = item.dataset.procedureId;
+        const procedure = document.getElementById(`edit-procedure-${procedureId}`).value;
+        const price = parseFloat(document.getElementById(`edit-price-${procedureId}`).value) || 0;
+        const discount = parseFloat(document.getElementById(`edit-discount-${procedureId}`).value) || 0;
+        const finalAmount = parseFloat(document.getElementById(`edit-final-amount-${procedureId}`).value) || 0;
+        
+        if (procedure && price > 0) {
+            procedures.push({
+                procedure,
+                price,
+                discount,
+                finalAmount
+            });
+        }
+    });
+    
+    if (procedures.length === 0) {
+        showError('Please complete at least one procedure with valid details');
+        return;
+    }
+    
     // Update the patient record
     patientLogs[patientIndex] = {
         id: patientId,
@@ -1000,10 +1376,8 @@ function handleEditFormSubmit(e) {
         gender: formData.get('patient-gender'),
         patientType: formData.get('patient-type'),
         insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
-        procedure: formData.get('procedure'),
-        price: Number(formData.get('price')),
-        discount: Number(formData.get('discount')) || 0,
-        finalAmount: Number(formData.get('final-amount')),
+        procedures: procedures,
+        totalAmount: parseFloat(document.getElementById('edit-total-amount').value) || 0,
         remarks: formData.get('remarks') || ''
     };
     
@@ -1020,33 +1394,30 @@ function handleEditPatientTypeChange(e) {
     const type = e.target.value;
     if (type === 'insurance') {
         document.getElementById('edit-insurance-company-row').style.display = 'block';
-        document.getElementById('edit-discount-row').style.display = 'block';
         populateEditInsuranceDropdown();
-        clearEditProcedureDropdown();
+        clearAllEditProcedures();
     } else if (type === 'cash') {
         document.getElementById('edit-insurance-company-row').style.display = 'none';
-        document.getElementById('edit-discount-row').style.display = 'none';
-        populateEditProcedureDropdown('cash');
+        clearAllEditProcedures();
     } else {
         document.getElementById('edit-insurance-company-row').style.display = 'none';
-        document.getElementById('edit-discount-row').style.display = 'none';
-        clearEditProcedureDropdown();
+        clearAllEditProcedures();
     }
 }
 
 function handleEditInsuranceCompanyChange(e) {
-    populateEditProcedureDropdown('insurance', e.target.value);
+    // Update all existing procedure dropdowns with the new insurance company
+    const procedureItems = document.querySelectorAll('#edit-procedures-list .procedure-item');
+    procedureItems.forEach(item => {
+        const procedureId = item.dataset.procedureId;
+        populateEditProcedureDropdown('insurance', e.target.value, procedureId);
+    });
 }
 
-function clearEditProcedureDropdown() {
-    const select = document.getElementById('edit-procedure');
-    select.innerHTML = '<option value="">Select procedure</option>';
-    
-    // Clear price fields
-    document.getElementById('edit-price').value = '';
-    document.getElementById('edit-discount').value = '';
-    document.getElementById('edit-final-amount').value = '';
-    document.getElementById('edit-remarks').value = '';
+function clearAllEditProcedures() {
+    document.getElementById('edit-procedures-list').innerHTML = '';
+    document.getElementById('edit-total-amount').value = '0';
+    editProcedureCounter = 0;
 }
 
 // --- ANALYTICS DATE RANGE ---
@@ -1189,7 +1560,16 @@ function updateAnalyticsSummary() {
     const filteredLogs = getFilteredPatientLogs();
     
     const totalPatients = filteredLogs.length;
-    const totalRevenue = filteredLogs.reduce((sum, log) => sum + (log.finalAmount || 0), 0);
+    
+    // Handle both new and old data formats
+    const totalRevenue = filteredLogs.reduce((sum, log) => {
+        if (log.procedures && Array.isArray(log.procedures)) {
+            return sum + (log.totalAmount || log.procedures.reduce((procSum, proc) => procSum + (proc.finalAmount || 0), 0));
+        } else {
+            return sum + (log.finalAmount || 0);
+        }
+    }, 0);
+    
     const avgAmount = totalPatients > 0 ? totalRevenue / totalPatients : 0;
     
     document.getElementById('analytics-total-patients').textContent = totalPatients;
@@ -1344,13 +1724,26 @@ function applyPatientsDateFilter() {
     // Apply existing search filter if there's a search term
     const searchTerm = document.getElementById('search-patients').value.toLowerCase();
     if (searchTerm) {
-        filteredLogs = dateFilteredLogs.filter(log => 
-            log.patientName.toLowerCase().includes(searchTerm) ||
-            log.fileNumber.toLowerCase().includes(searchTerm) ||
-            log.procedure.toLowerCase().includes(searchTerm) ||
-            (log.age && log.age.toString().includes(searchTerm)) ||
-            (log.gender && log.gender.toLowerCase().includes(searchTerm))
-        );
+        filteredLogs = dateFilteredLogs.filter(log => {
+            // Check basic fields
+            if (log.patientName.toLowerCase().includes(searchTerm) ||
+                log.fileNumber.toLowerCase().includes(searchTerm) ||
+                (log.age && log.age.toString().includes(searchTerm)) ||
+                (log.gender && log.gender.toLowerCase().includes(searchTerm))) {
+                return true;
+            }
+            
+            // Check procedures (handle both new and old formats)
+            if (log.procedures && Array.isArray(log.procedures)) {
+                return log.procedures.some(proc => 
+                    proc.procedure.toLowerCase().includes(searchTerm)
+                );
+            } else if (log.procedure) {
+                return log.procedure.toLowerCase().includes(searchTerm);
+            }
+            
+            return false;
+        });
     } else {
         filteredLogs = [...dateFilteredLogs];
     }
@@ -1583,7 +1976,16 @@ function renderRevenueChart() {
     const monthlyRevenue = {};
     filteredLogs.forEach(log => {
         const month = new Date(log.visitDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        monthlyRevenue[month] = (monthlyRevenue[month] || 0) + log.finalAmount;
+        
+        // Handle both new and old data formats
+        let amount = 0;
+        if (log.procedures && Array.isArray(log.procedures)) {
+            amount = log.totalAmount || log.procedures.reduce((procSum, proc) => procSum + (proc.finalAmount || 0), 0);
+        } else {
+            amount = log.finalAmount || 0;
+        }
+        
+        monthlyRevenue[month] = (monthlyRevenue[month] || 0) + amount;
     });
     
     const labels = Object.keys(monthlyRevenue);
@@ -1645,10 +2047,20 @@ function renderProcedureChart() {
     
     const filteredLogs = getFilteredPatientLogs();
     
-    // Count procedures
+    // Count procedures (handle both new and old formats)
     const procedureCount = {};
     filteredLogs.forEach(log => {
-        procedureCount[log.procedure] = (procedureCount[log.procedure] || 0) + 1;
+        if (log.procedures && Array.isArray(log.procedures)) {
+            // New format with multiple procedures
+            log.procedures.forEach(proc => {
+                procedureCount[proc.procedure] = (procedureCount[proc.procedure] || 0) + 1;
+            });
+        } else {
+            // Old format with single procedure
+            if (log.procedure) {
+                procedureCount[log.procedure] = (procedureCount[log.procedure] || 0) + 1;
+            }
+        }
     });
     
     // Get top 5 procedures
@@ -1778,6 +2190,9 @@ async function init() {
     // Migrate existing patient data to include age and gender fields
     migratePatientData();
     
+    // Migrate existing patient data to support multiple procedures
+    migrateProcedureData();
+    
     filteredLogs = [...patientLogs];
     
     // Load price lists
@@ -1789,8 +2204,8 @@ async function init() {
     // Update settings insurance dropdown with all companies
     populateSettingsInsuranceDropdown();
     
-    // Setup initial form state - clear procedure dropdown since no patient type is selected
-    clearProcedureDropdown();
+    // Setup initial form state - clear all procedures
+    clearAllProcedures();
     
     // Update stats
     updateStats();
@@ -1822,5 +2237,41 @@ function migratePatientData() {
     if (dataChanged) {
         localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
         console.log('Patient data migrated to include age and gender fields');
+    }
+}
+
+function migrateProcedureData() {
+    let dataChanged = false;
+    
+    patientLogs = patientLogs.map(log => {
+        const updatedLog = { ...log };
+        
+        // Convert old single procedure format to new multiple procedures format
+        if (!updatedLog.procedures && updatedLog.procedure) {
+            updatedLog.procedures = [{
+                procedure: updatedLog.procedure,
+                price: updatedLog.price || 0,
+                discount: updatedLog.discount || 0,
+                finalAmount: updatedLog.finalAmount || 0
+            }];
+            
+            updatedLog.totalAmount = updatedLog.finalAmount || 0;
+            
+            // Remove old fields
+            delete updatedLog.procedure;
+            delete updatedLog.price;
+            delete updatedLog.discount;
+            delete updatedLog.finalAmount;
+            
+            dataChanged = true;
+        }
+        
+        return updatedLog;
+    });
+    
+    // Save updated data if changes were made
+    if (dataChanged) {
+        localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
+        console.log('Patient data migrated to support multiple procedures');
     }
 }

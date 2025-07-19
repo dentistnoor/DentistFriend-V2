@@ -231,34 +231,28 @@
                             </div>
                         </div>
                         
-                        <!-- Procedure Row (full width) -->
-                        <div class="form-row-single">
-                            <div class="form-group">
-                                <label for="procedure">Procedure</label>
-                                <select id="procedure" name="procedure" required>
-                                    <option value="">Select procedure</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Price Information Row -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="price">Price (SAR)</label>
-                                <input type="number" id="price" name="price" step="any" placeholder="Enter price">
+                        <!-- Procedures Section -->
+                        <div class="procedures-section">
+                            <div class="procedures-header">
+                                <label>Procedures</label>
+                                <button type="button" class="add-procedure-btn" id="add-procedure-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 5v14M5 12h14"/>
+                                    </svg>
+                                    Add Procedure
+                                </button>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="final-amount">Final Amount (SAR)</label>
-                                <input type="number" id="final-amount" name="final-amount" required step="any" placeholder="Enter final amount">
+                            <div id="procedures-list" class="procedures-list">
+                                <!-- Procedure items will be added here dynamically -->
                             </div>
-                        </div>
-                        
-                        <!-- Discount Row (hidden by default, editable for cash, readonly for insurance) -->
-                        <div class="form-row-single">
-                            <div class="form-group" id="discount-row" style="display:none;">
-                                <label for="discount">Discount (%)</label>
-                                <input type="number" id="discount" name="discount" step="any" min="0" max="100" placeholder="Enter discount percentage">
+                            
+                            <!-- Total Amount Display -->
+                            <div class="total-amount-row">
+                                <div class="form-group">
+                                    <label for="total-amount">Total Amount (SAR)</label>
+                                    <input type="number" id="total-amount" name="total-amount" readonly step="any" value="0">
+                                </div>
                             </div>
                         </div>
                         
@@ -348,10 +342,8 @@
                                 <th>Gender</th>
                                 <th>Type</th>
                                 <th>Insurance</th>
-                                <th>Procedure</th>
-                                <th>Price</th>
-                                <th>Discount</th>
-                                <th>Final Amount</th>
+                                <th>Procedures</th>
+                                <th>Total Amount</th>
                                 <th>Remarks</th>
                                 <th>Actions</th>
                             </tr>
@@ -706,36 +698,30 @@
                     </div>
                 </div>
                 
-                <!-- Procedure Row (full width) -->
-                <div class="form-row-single">
-                    <div class="form-group">
-                        <label for="edit-procedure">Procedure</label>
-                        <select id="edit-procedure" name="procedure" required>
-                            <option value="">Select procedure</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Price Information Row -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-price">Price (SAR)</label>
-                        <input type="number" id="edit-price" name="price" readonly>
+                <!-- Procedures Section -->
+                <div class="procedures-section">
+                    <div class="procedures-header">
+                        <label>Procedures</label>
+                        <button type="button" class="add-procedure-btn" id="edit-add-procedure-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            Add Procedure
+                        </button>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="edit-final-amount">Final Amount (SAR)</label>
-                        <input type="number" id="edit-final-amount" name="final-amount" required step="any">
+                    <div id="edit-procedures-list" class="procedures-list">
+                        <!-- Procedure items will be added here dynamically -->
+                    </div>
+                    
+                    <!-- Total Amount Display -->
+                    <div class="total-amount-row">
+                        <div class="form-group">
+                            <label for="edit-total-amount">Total Amount (SAR)</label>
+                            <input type="number" id="edit-total-amount" name="total-amount" readonly step="any" value="0">
+                        </div>
                     </div>
                 </div>
-                
-                                 <!-- Discount Row (hidden by default, shown for insurance) -->
-                 <div class="form-row-single">
-                     <div class="form-group" id="edit-discount-row" style="display:none;">
-                         <label for="edit-discount">Discount (%)</label>
-                         <input type="number" id="edit-discount" name="discount" readonly>
-                     </div>
-                 </div>
                  
                  <!-- Remarks Row (full width) -->
                  <div class="form-row-single">
