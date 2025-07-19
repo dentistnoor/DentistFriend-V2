@@ -259,6 +259,9 @@ function setupEventListeners() {
     // Patient records date range controls
     setupPatientsDateRange();
     
+    // File upload functionality
+    setupFileUploads();
+    
     // Close modal when clicking outside
     document.getElementById('edit-modal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('edit-modal')) {
@@ -856,6 +859,60 @@ function populateEditInsuranceDropdown() {
         option.textContent = company.name;
         select.appendChild(option);
     });
+}
+
+function populateSettingsInsuranceDropdown() {
+    const select = document.getElementById('insurance-select');
+    const currentValue = select.value;
+    
+    // Save all existing predefined options
+    const predefinedCompanies = [
+        'AL ETIHAD', 'AL RAJHI', 'BUPA', 'GIG', 'GLOBEMED', 'GULF UNION',
+        'MALATH', 'MEDGULF-MEDIVISA', 'SAUDI ARABIAN INSURANCE COMPANY (SAICO)',
+        'SAUDI NEXTCARE', 'TAWUNIYA', 'TOTAL CARE SAUDI'
+    ];
+    
+    // Clear and rebuild
+    select.innerHTML = '<option value="">Choose insurance company...</option>';
+    
+    // Add predefined companies
+    predefinedCompanies.forEach(companyName => {
+        const option = document.createElement('option');
+        option.value = companyName;
+        option.textContent = companyName;
+        select.appendChild(option);
+    });
+    
+    // Add custom companies that aren't in predefined list
+    const customCompanies = insuranceCompanies.filter(company => 
+        !predefinedCompanies.includes(company.name)
+    );
+    
+    if (customCompanies.length > 0) {
+        // Add separator if there are custom companies
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '--- Custom Companies ---';
+        select.appendChild(separator);
+        
+        customCompanies.forEach(company => {
+            const option = document.createElement('option');
+            option.value = company.name;
+            option.textContent = company.name;
+            select.appendChild(option);
+        });
+    }
+    
+    // Add "Add New" option
+    const addNewOption = document.createElement('option');
+    addNewOption.value = '__ADD_NEW__';
+    addNewOption.textContent = '➕ Add New Insurance Company';
+    select.appendChild(addNewOption);
+    
+    // Restore selection if valid
+    if (currentValue && currentValue !== '__ADD_NEW__') {
+        select.value = currentValue;
+    }
 }
 
 function populateEditProcedureDropdown(type, companyName) {
@@ -1548,9 +1605,448 @@ async function init() {
     // Load price lists
     await loadPriceLists();
     
+    // Load uploaded procedures from localStorage
+    loadUploadedProcedures();
+    
+    // Update settings insurance dropdown with all companies
+    populateSettingsInsuranceDropdown();
+    
     // Setup initial form state - clear procedure dropdown since no patient type is selected
     clearProcedureDropdown();
     
     // Update stats
     updateStats();
+}
+
+// --- FILE UPLOAD FUNCTIONALITY ---
+function setupFileUploads() {
+    const cashFileInput = document.getElementById('cash-file-input');
+    const insuranceFileInput = document.getElementById('insurance-file-input');
+    const cashUploadBtn = document.getElementById('upload-cash-btn');
+    const insuranceUploadBtn = document.getElementById('upload-insurance-btn');
+    const cashUploadArea = document.getElementById('cash-upload-area');
+    const insuranceUploadArea = document.getElementById('insurance-upload-area');
+    const insuranceSelect = document.getElementById('insurance-select');
+    
+    // File input change handlers
+    cashFileInput.addEventListener('change', (e) => handleFileSelect(e, 'cash'));
+    insuranceFileInput.addEventListener('change', (e) => handleFileSelect(e, 'insurance'));
+    
+    // Upload button handlers
+    cashUploadBtn.addEventListener('click', () => uploadCashProcedures());
+    insuranceUploadBtn.addEventListener('click', () => uploadInsuranceProcedures());
+    
+    // Insurance company selection
+    insuranceSelect.addEventListener('change', handleInsuranceCompanySelection);
+    
+    // New company functionality
+    setupNewCompanyHandlers();
+    
+    // Drag and drop functionality
+    setupDragAndDrop(cashUploadArea, cashFileInput, 'cash');
+    setupDragAndDrop(insuranceUploadArea, insuranceFileInput, 'insurance');
+}
+
+function setupDragAndDrop(area, input, type) {
+    area.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        area.classList.add('dragover');
+    });
+    
+    area.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        area.classList.remove('dragover');
+    });
+    
+    area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        area.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                input.files = files;
+                handleFileSelect({ target: input }, type);
+            } else {
+                showError('Please upload only Excel files (.xlsx)');
+            }
+        }
+    });
+}
+
+function handleFileSelect(e, type) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        showError('Please select an Excel file (.xlsx)');
+        return;
+    }
+    
+    // Update UI
+    const fileInfo = document.getElementById(`${type}-file-info`);
+    const uploadBtn = document.getElementById(`upload-${type}-btn`);
+    
+    fileInfo.textContent = `📄 ${file.name} (${formatFileSize(file.size)})`;
+    fileInfo.style.display = 'block';
+    
+    if (type === 'cash') {
+        uploadBtn.disabled = false;
+    } else {
+        checkInsuranceUploadReady();
+    }
+}
+
+function handleInsuranceCompanySelection() {
+    const insuranceSelect = document.getElementById('insurance-select');
+    const selectedValue = insuranceSelect.value;
+    
+    if (selectedValue === '__ADD_NEW__') {
+        showNewCompanyInput();
+    } else {
+        hideNewCompanyInput();
+        checkInsuranceUploadReady();
+    }
+}
+
+function setupNewCompanyHandlers() {
+    const newCompanyInput = document.getElementById('new-company-name');
+    const confirmBtn = document.getElementById('confirm-new-company');
+    const cancelBtn = document.getElementById('cancel-new-company');
+    
+    // Input validation
+    newCompanyInput.addEventListener('input', validateNewCompanyInput);
+    newCompanyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!confirmBtn.disabled) {
+                addNewInsuranceCompany();
+            }
+        }
+    });
+    
+    // Button handlers
+    confirmBtn.addEventListener('click', addNewInsuranceCompany);
+    cancelBtn.addEventListener('click', cancelNewCompany);
+}
+
+function validateNewCompanyInput() {
+    const input = document.getElementById('new-company-name');
+    const confirmBtn = document.getElementById('confirm-new-company');
+    const companyName = input.value.trim();
+    
+    // Check if name is valid and not already exists
+    const isValid = companyName.length >= 2 && !companyAlreadyExists(companyName);
+    confirmBtn.disabled = !isValid;
+    
+    // Update input styling
+    if (companyName.length > 0) {
+        if (companyAlreadyExists(companyName)) {
+            input.style.borderColor = '#ef4444';
+            input.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+        } else if (companyName.length >= 2) {
+            input.style.borderColor = '#10b981';
+            input.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+        } else {
+            input.style.borderColor = '#d9e0fe';
+            input.style.boxShadow = 'none';
+        }
+    } else {
+        input.style.borderColor = '#d9e0fe';
+        input.style.boxShadow = 'none';
+    }
+}
+
+function companyAlreadyExists(companyName) {
+    const normalizedName = companyName.trim().toUpperCase();
+    return insuranceCompanies.some(company => 
+        company.name.toUpperCase() === normalizedName
+    );
+}
+
+function showNewCompanyInput() {
+    const wrapper = document.getElementById('new-company-wrapper');
+    const input = document.getElementById('new-company-name');
+    
+    wrapper.style.display = 'block';
+    input.focus();
+    
+    // Reset input state
+    input.value = '';
+    input.style.borderColor = '#d9e0fe';
+    input.style.boxShadow = 'none';
+    document.getElementById('confirm-new-company').disabled = true;
+    
+    checkInsuranceUploadReady();
+}
+
+function hideNewCompanyInput() {
+    const wrapper = document.getElementById('new-company-wrapper');
+    wrapper.style.display = 'none';
+}
+
+function addNewInsuranceCompany() {
+    const input = document.getElementById('new-company-name');
+    const companyName = input.value.trim();
+    
+    if (companyName.length < 2) {
+        showError('Company name must be at least 2 characters long');
+        return;
+    }
+    
+    if (companyAlreadyExists(companyName)) {
+        showError('This insurance company already exists');
+        return;
+    }
+    
+    // Add to insurance companies list
+    const newCompany = { name: companyName, file: companyName + '.xlsx' };
+    insuranceCompanies.push(newCompany);
+    
+    // Add to dropdown (before the "Add New" option)
+    const select = document.getElementById('insurance-select');
+    const addNewOption = select.querySelector('option[value="__ADD_NEW__"]');
+    const newOption = document.createElement('option');
+    newOption.value = companyName;
+    newOption.textContent = companyName;
+    select.insertBefore(newOption, addNewOption);
+    
+    // Select the new company
+    select.value = companyName;
+    
+    // Hide the input and show success
+    hideNewCompanyInput();
+    showSuccess(`Insurance company "${companyName}" added successfully!`);
+    
+    // Update insurance companies in form dropdowns (for Add New Patient)
+    updateInsuranceDropdowns();
+    
+    // Save to localStorage
+    localStorage.setItem('uploadedInsuranceCompanies', JSON.stringify(insuranceCompanies));
+    
+    checkInsuranceUploadReady();
+}
+
+function cancelNewCompany() {
+    const select = document.getElementById('insurance-select');
+    select.value = '';
+    hideNewCompanyInput();
+    checkInsuranceUploadReady();
+}
+
+function updateInsuranceDropdowns() {
+    // Update the Add New Patient form dropdown
+    populateInsuranceDropdown();
+    
+    // Update the Edit Patient form dropdown if it exists
+    const editSelect = document.getElementById('edit-insurance-company');
+    if (editSelect) {
+        const currentValue = editSelect.value;
+        editSelect.innerHTML = '<option value="">Select insurance company</option>';
+        
+        insuranceCompanies.forEach(company => {
+            const option = document.createElement('option');
+            option.value = company.name;
+            option.textContent = company.name;
+            editSelect.appendChild(option);
+        });
+        
+        // Restore selected value if it still exists
+        if (currentValue && insuranceCompanies.find(c => c.name === currentValue)) {
+            editSelect.value = currentValue;
+        }
+    }
+    
+    // Update the Settings page dropdown
+    populateSettingsInsuranceDropdown();
+}
+
+function checkInsuranceUploadReady() {
+    const insuranceFile = document.getElementById('insurance-file-input').files[0];
+    const insuranceCompany = document.getElementById('insurance-select').value;
+    const uploadBtn = document.getElementById('upload-insurance-btn');
+    
+    // Don't enable if "Add New Company" is selected or no valid company is selected
+    uploadBtn.disabled = !(insuranceFile && insuranceCompany && insuranceCompany !== '__ADD_NEW__');
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+async function uploadCashProcedures() {
+    const fileInput = document.getElementById('cash-file-input');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showError('Please select a file first');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const uploadBtn = document.getElementById('upload-cash-btn');
+        const originalText = uploadBtn.innerHTML;
+        uploadBtn.innerHTML = '<span>Uploading...</span>';
+        uploadBtn.disabled = true;
+        
+        // Read and parse the Excel file
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // Parse using existing function
+        const procedures = parseCashProcedures(workbook);
+        
+        if (procedures.length === 0) {
+            throw new Error('No valid procedures found in the file. Please check the format.');
+        }
+        
+        // Validate required fields
+        const invalidProcedures = procedures.filter(p => !p.procedure || !p.price);
+        if (invalidProcedures.length > 0) {
+            throw new Error(`Found ${invalidProcedures.length} procedures with missing data. Please check your file format.`);
+        }
+        
+        // Update the global cash procedures
+        cashProcedures = procedures;
+        
+        // Save to localStorage for persistence
+        localStorage.setItem('uploadedCashProcedures', JSON.stringify(procedures));
+        
+        showSuccess(`Successfully uploaded ${procedures.length} cash procedures!`);
+        
+        // Reset the form
+        fileInput.value = '';
+        document.getElementById('cash-file-info').style.display = 'none';
+        uploadBtn.innerHTML = originalText;
+        uploadBtn.disabled = true;
+        
+    } catch (error) {
+        showError(`Error uploading cash procedures: ${error.message}`);
+        
+        // Reset button state
+        const uploadBtn = document.getElementById('upload-cash-btn');
+        uploadBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Upload Cash Procedures
+        `;
+        uploadBtn.disabled = false;
+    }
+}
+
+async function uploadInsuranceProcedures() {
+    const fileInput = document.getElementById('insurance-file-input');
+    const insuranceSelect = document.getElementById('insurance-select');
+    const file = fileInput.files[0];
+    const companyName = insuranceSelect.value;
+    
+    if (!file || !companyName) {
+        showError('Please select both a file and insurance company');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const uploadBtn = document.getElementById('upload-insurance-btn');
+        const originalText = uploadBtn.innerHTML;
+        uploadBtn.innerHTML = '<span>Uploading...</span>';
+        uploadBtn.disabled = true;
+        
+        // Read and parse the Excel file
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // Parse using existing function
+        const procedures = parseInsuranceProcedures(workbook);
+        
+        if (procedures.length === 0) {
+            throw new Error('No valid procedures found in the file. Please check the format.');
+        }
+        
+        // Validate required fields
+        const invalidProcedures = procedures.filter(p => !p.procedure || !p.price);
+        if (invalidProcedures.length > 0) {
+            throw new Error(`Found ${invalidProcedures.length} procedures with missing data. Please check your file format.`);
+        }
+        
+        // Update the global insurance procedures
+        const normalizedCompanyName = normalizeCompanyName(companyName);
+        insuranceProcedures[normalizedCompanyName] = procedures;
+        
+        // Update insurance companies list if not already present
+        const existingCompany = insuranceCompanies.find(c => c.name === companyName);
+        if (!existingCompany) {
+            insuranceCompanies.push({ name: companyName, file: companyName + '.xlsx' });
+        }
+        
+        // Save to localStorage for persistence
+        localStorage.setItem('uploadedInsuranceProcedures', JSON.stringify(insuranceProcedures));
+        localStorage.setItem('uploadedInsuranceCompanies', JSON.stringify(insuranceCompanies));
+        
+        showSuccess(`Successfully uploaded ${procedures.length} procedures for ${companyName}!`);
+        
+        // Reset the form
+        fileInput.value = '';
+        insuranceSelect.value = '';
+        document.getElementById('insurance-file-info').style.display = 'none';
+        uploadBtn.innerHTML = originalText;
+        uploadBtn.disabled = true;
+        
+    } catch (error) {
+        showError(`Error uploading insurance procedures: ${error.message}`);
+        
+        // Reset button state
+        const uploadBtn = document.getElementById('upload-insurance-btn');
+        uploadBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Upload Insurance Procedures
+        `;
+        uploadBtn.disabled = false;
+    }
+}
+
+// Load uploaded procedures from localStorage on initialization
+function loadUploadedProcedures() {
+    // Load cash procedures
+    const savedCashProcedures = localStorage.getItem('uploadedCashProcedures');
+    if (savedCashProcedures) {
+        const uploadedCash = JSON.parse(savedCashProcedures);
+        if (uploadedCash.length > 0) {
+            cashProcedures = uploadedCash;
+        }
+    }
+    
+    // Load insurance procedures
+    const savedInsuranceProcedures = localStorage.getItem('uploadedInsuranceProcedures');
+    const savedInsuranceCompanies = localStorage.getItem('uploadedInsuranceCompanies');
+    
+    if (savedInsuranceProcedures) {
+        const uploadedInsurance = JSON.parse(savedInsuranceProcedures);
+        Object.assign(insuranceProcedures, uploadedInsurance);
+    }
+    
+    if (savedInsuranceCompanies) {
+        const uploadedCompanies = JSON.parse(savedInsuranceCompanies);
+        // Merge with existing companies, avoiding duplicates
+        uploadedCompanies.forEach(company => {
+            const exists = insuranceCompanies.find(c => c.name === company.name);
+            if (!exists) {
+                insuranceCompanies.push(company);
+            }
+        });
+    }
 }

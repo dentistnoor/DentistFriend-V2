@@ -429,9 +429,11 @@
             <div id="settings" class="tab-content">
                 <div class="page-header">
                     <h2>Settings</h2>
+                    <p>Manage your account and application preferences</p>
                 </div>
 
                 <div class="settings-section">
+                    <!-- Doctor Profile Card -->
                     <div class="settings-card">
                         <div class="settings-header">
                             <h3>Doctor Profile</h3>
@@ -461,10 +463,142 @@
                             </div>
                         </form>
                     </div>
-                </div>
-            </div>
+
+                    <!-- Procedures & Pricing Upload Card -->
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Procedures & Pricing</h3>
+                            <p>Upload Excel files to update cash and insurance procedure prices</p>
+                        </div>
+
+                        <!-- File Format Instructions -->
+                        <div class="upload-instructions">
+                            <h4>📋 File Format Requirements</h4>
+                            <div class="instruction-sections">
+                                <div class="instruction-section">
+                                    <h5>💰 Cash Procedures File Format:</h5>
+                                    <ul>
+                                        <li><strong>Required Columns:</strong></li>
+                                        <li>• <code>Description</code> - Procedure name</li>
+                                        <li>• <code>Price</code> - Base price in SAR</li>
+                                        <li>• <code>Net</code> - Final amount (optional, defaults to Price)</li>
+                                        <li><strong>Example:</strong> Cash.xlsx with procedures and their prices</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="instruction-section">
+                                    <h5>🏥 Insurance Procedures File Format:</h5>
+                                    <ul>
+                                        <li><strong>Required Columns:</strong></li>
+                                        <li>• <code>Description</code> - Procedure name</li>
+                                        <li>• <code>Price</code> - Base price in SAR</li>
+                                        <li>• <code>Discount</code> - Discount percentage</li>
+                                        <li>• <code>Net</code> - Final amount after discount</li>
+                                        <li><strong>Note:</strong> Each insurance company requires a separate file</li>
+                                        <li><strong>Tip:</strong> You can add new insurance companies using the dropdown</li>
+                                    </ul>
+                                </div>
                             </div>
-                        </form>
+                            
+                            <div class="format-note">
+                                <strong>📝 Important:</strong> 
+                                <ul>
+                                    <li>• Headers can be in any row (system will auto-detect)</li>
+                                    <li>• Column names are case-insensitive</li>
+                                    <li>• Only .xlsx files are supported</li>
+                                    <li>• Empty rows will be ignored</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Cash Procedures Upload -->
+                        <div class="upload-section">
+                            <h4>💰 Upload Cash Procedures</h4>
+                            <div class="file-upload-area" id="cash-upload-area">
+                                <input type="file" id="cash-file-input" accept=".xlsx,.xls" hidden>
+                                <div class="upload-content" onclick="document.getElementById('cash-file-input').click()">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                    </svg>
+                                    <h4>Click to upload Cash Procedures Excel file</h4>
+                                    <p>Or drag and drop your .xlsx file here</p>
+                                    <span class="file-info" id="cash-file-info"></span>
+                                </div>
+                            </div>
+                            <button type="button" class="upload-btn" id="upload-cash-btn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7,10 12,15 17,10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Upload Cash Procedures
+                            </button>
+                        </div>
+
+                        <!-- Insurance Procedures Upload -->
+                        <div class="upload-section">
+                            <h4>🏥 Upload Insurance Procedures</h4>
+                            <div class="insurance-select-wrapper">
+                                <label for="insurance-select">Select Insurance Company:</label>
+                                <select id="insurance-select" class="insurance-selector">
+                                    <option value="">Choose insurance company...</option>
+                                    <option value="AL ETIHAD">AL ETIHAD</option>
+                                    <option value="AL RAJHI">AL RAJHI</option>
+                                    <option value="BUPA">BUPA</option>
+                                    <option value="GIG">GIG</option>
+                                    <option value="GLOBEMED">GLOBEMED</option>
+                                    <option value="GULF UNION">GULF UNION</option>
+                                    <option value="MALATH">MALATH</option>
+                                    <option value="MEDGULF-MEDIVISA">MEDGULF-MEDIVISA</option>
+                                    <option value="SAUDI ARABIAN INSURANCE COMPANY (SAICO)">SAUDI ARABIAN INSURANCE COMPANY (SAICO)</option>
+                                    <option value="SAUDI NEXTCARE">SAUDI NEXTCARE</option>
+                                    <option value="TAWUNIYA">TAWUNIYA</option>
+                                    <option value="TOTAL CARE SAUDI">TOTAL CARE SAUDI</option>
+                                    <option value="__ADD_NEW__">➕ Add New Insurance Company</option>
+                                </select>
+                            </div>
+                            
+                            <!-- New Company Input (Hidden by default) -->
+                            <div class="new-company-wrapper" id="new-company-wrapper" style="display: none;">
+                                <label for="new-company-name">New Insurance Company Name:</label>
+                                <div class="new-company-input-group">
+                                    <input type="text" id="new-company-name" class="new-company-input" placeholder="Enter insurance company name" maxlength="100">
+                                    <button type="button" class="confirm-new-company" id="confirm-new-company" title="Add Company">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 6L9 17l-5-5"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="cancel-new-company" id="cancel-new-company" title="Cancel">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="6" x2="6" y2="18"/>
+                                            <line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <small class="company-name-hint">Company name will be used for dropdown and file identification</small>
+                            </div>
+                            <div class="file-upload-area" id="insurance-upload-area">
+                                <input type="file" id="insurance-file-input" accept=".xlsx,.xls" hidden>
+                                <div class="upload-content" onclick="document.getElementById('insurance-file-input').click()">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                    </svg>
+                                    <h4>Click to upload Insurance Procedures Excel file</h4>
+                                    <p>Or drag and drop your .xlsx file here</p>
+                                    <span class="file-info" id="insurance-file-info"></span>
+                                </div>
+                            </div>
+                            <button type="button" class="upload-btn" id="upload-insurance-btn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7,10 12,15 17,10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Upload Insurance Procedures
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
