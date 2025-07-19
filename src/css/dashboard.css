@@ -851,16 +851,34 @@ body {
 .patients-table th:nth-child(1), .patients-table td:nth-child(1) { width: 90px; } /* Visit Date */
 .patients-table th:nth-child(2), .patients-table td:nth-child(2) { width: 120px; } /* Patient Name */
 .patients-table th:nth-child(3), .patients-table td:nth-child(3) { width: 80px; } /* File Number */
-.patients-table th:nth-child(4), .patients-table td:nth-child(4) { width: 50px; } /* Age */
-.patients-table th:nth-child(5), .patients-table td:nth-child(5) { width: 70px; } /* Gender */
-.patients-table th:nth-child(6), .patients-table td:nth-child(6) { width: 70px; } /* Type */
+.patients-table th:nth-child(4), .patients-table td:nth-child(4) { width: 50px; text-align: center; } /* Age */
+.patients-table th:nth-child(5), .patients-table td:nth-child(5) { width: 80px; text-align: center; } /* Gender */
+.patients-table th:nth-child(6), .patients-table td:nth-child(6) { width: 100px; text-align: center; } /* Type */
 .patients-table th:nth-child(7), .patients-table td:nth-child(7) { width: 100px; } /* Insurance */
 .patients-table th:nth-child(8), .patients-table td:nth-child(8) { width: 150px; } /* Procedure */
-.patients-table th:nth-child(9), .patients-table td:nth-child(9) { width: 80px; } /* Price */
-.patients-table th:nth-child(10), .patients-table td:nth-child(10) { width: 70px; } /* Discount */
-.patients-table th:nth-child(11), .patients-table td:nth-child(11) { width: 90px; } /* Final Amount */
+.patients-table th:nth-child(9), .patients-table td:nth-child(9) { width: 80px; text-align: right; } /* Price */
+.patients-table th:nth-child(10), .patients-table td:nth-child(10) { width: 80px; text-align: center; } /* Discount */
+.patients-table th:nth-child(11), .patients-table td:nth-child(11) { width: 90px; text-align: right; } /* Final Amount */
 .patients-table th:nth-child(12), .patients-table td:nth-child(12) { width: 120px; } /* Remarks */
-.patients-table th:nth-child(13), .patients-table td:nth-child(13) { width: 100px; position: sticky; right: 0; background: inherit; z-index: 10; } /* Actions - sticky */
+
+/* Actions column - sticky to the right */
+.patients-table th:nth-child(13), .patients-table td:nth-child(13) { 
+    width: 100px; 
+    position: sticky; 
+    right: 0; 
+    background: #f9fafb; 
+    z-index: 10;
+    border-left: 1px solid #d9e0fe;
+    text-align: center;
+}
+
+.patients-table td:nth-child(13) {
+    background: white;
+}
+
+.patients-table tr:hover td:nth-child(13) {
+    background: #f9fafb; /* Ensure sticky column matches hover background */
+}
 
 .patients-table th {
     background: #f9fafb;
@@ -876,10 +894,6 @@ body {
 
 .patients-table tr:hover {
     background: #f9fafb;
-}
-
-.patients-table tr:hover td:nth-child(13) {
-    background: #f9fafb; /* Ensure sticky column matches hover background */
 }
 
 .patients-table tr:last-child td {
@@ -1085,11 +1099,14 @@ body {
 
 /* Badges */
 .badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
+    display: inline-block;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .badge.cash {
@@ -1114,7 +1131,7 @@ body {
 
 .badge.unknown {
     background-color: #f3f4f6;
-    color: #4b5563;
+    color: #6b7280;
 }
 
 /* Success and Error Messages */

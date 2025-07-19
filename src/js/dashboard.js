@@ -763,12 +763,20 @@ function renderPatientTable() {
     
     logsToShow.forEach(log => {
         const row = document.createElement('tr');
+        
+        // Handle age display consistently
+        const ageDisplay = (log.age && log.age > 0) ? log.age : 'N/A';
+        
+        // Handle gender display consistently
+        const genderClass = log.gender ? log.gender.toLowerCase() : 'unknown';
+        const genderText = log.gender ? log.gender.charAt(0).toUpperCase() + log.gender.slice(1) : 'N/A';
+        
         row.innerHTML = `
             <td>${formatDateToDDMMYYYY(log.visitDate)}</td>
             <td>${log.patientName}</td>
             <td>${log.fileNumber}</td>
-            <td>${log.age || 'N/A'}</td>
-            <td><span class="badge ${log.gender || 'unknown'}">${log.gender ? log.gender.charAt(0).toUpperCase() + log.gender.slice(1) : 'N/A'}</span></td>
+            <td>${ageDisplay}</td>
+            <td><span class="badge ${genderClass}">${genderText}</span></td>
             <td><span class="badge ${log.patientType}">${log.patientType}</span></td>
             <td>${log.insuranceCompany || '-'}</td>
             <td>${log.procedure}</td>
@@ -1709,6 +1717,10 @@ function handleSettingsSubmit(e) {
 async function init() {
     // Load patient logs from localStorage
     patientLogs = JSON.parse(localStorage.getItem('patientLogs') || '[]');
+    
+    // Migrate existing patient data to include age and gender fields
+    migratePatientData();
+    
     filteredLogs = [...patientLogs];
     
     // Load price lists
@@ -1719,4 +1731,33 @@ async function init() {
     
     // Update stats
     updateStats();
+}
+
+// --- DATA MIGRATION ---
+function migratePatientData() {
+    let dataChanged = false;
+    
+    patientLogs = patientLogs.map(log => {
+        const updatedLog = { ...log };
+        
+        // Add age field if missing
+        if (!updatedLog.hasOwnProperty('age')) {
+            updatedLog.age = null;
+            dataChanged = true;
+        }
+        
+        // Add gender field if missing
+        if (!updatedLog.hasOwnProperty('gender')) {
+            updatedLog.gender = null;
+            dataChanged = true;
+        }
+        
+        return updatedLog;
+    });
+    
+    // Save updated data if changes were made
+    if (dataChanged) {
+        localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
+        console.log('Patient data migrated to include age and gender fields');
+    }
 }
