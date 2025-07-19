@@ -302,6 +302,8 @@ function handleFormSubmit(e) {
         visitDate: formData.get('visit-date'),
         patientName: formData.get('patient-name'),
         fileNumber: formData.get('file-number'),
+        age: Number(formData.get('patient-age')),
+        gender: formData.get('patient-gender'),
         patientType: formData.get('patient-type'),
         insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
         procedure: formData.get('procedure'),
@@ -764,10 +766,20 @@ function renderPatientTable() {
     
     logsToShow.forEach(log => {
         const row = document.createElement('tr');
+        
+        // Handle age display consistently
+        const ageDisplay = (log.age && log.age > 0) ? log.age : 'N/A';
+        
+        // Handle gender display consistently
+        const genderClass = log.gender ? log.gender.toLowerCase() : 'unknown';
+        const genderText = log.gender ? log.gender.charAt(0).toUpperCase() + log.gender.slice(1) : 'N/A';
+        
         row.innerHTML = `
             <td>${formatDateToDDMMYYYY(log.visitDate)}</td>
             <td>${log.patientName}</td>
             <td>${log.fileNumber}</td>
+            <td>${ageDisplay}</td>
+            <td><span class="badge ${genderClass}">${genderText}</span></td>
             <td><span class="badge ${log.patientType}">${log.patientType}</span></td>
             <td>${log.insuranceCompany || '-'}</td>
             <td>${log.procedure}</td>
@@ -817,6 +829,8 @@ function editPatient(id) {
     document.getElementById('edit-visit-date').value = patient.visitDate;
     document.getElementById('edit-patient-name').value = patient.patientName;
     document.getElementById('edit-file-number').value = patient.fileNumber;
+    document.getElementById('edit-patient-age').value = patient.age || '';
+    document.getElementById('edit-patient-gender').value = patient.gender || '';
     document.getElementById('edit-patient-type').value = patient.patientType;
     document.getElementById('edit-price').value = patient.price;
     document.getElementById('edit-discount').value = patient.discount || '';
@@ -982,6 +996,8 @@ function handleEditFormSubmit(e) {
         visitDate: formData.get('visit-date'),
         patientName: formData.get('patient-name'),
         fileNumber: formData.get('file-number'),
+        age: Number(formData.get('patient-age')),
+        gender: formData.get('patient-gender'),
         patientType: formData.get('patient-type'),
         insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
         procedure: formData.get('procedure'),
@@ -1331,7 +1347,9 @@ function applyPatientsDateFilter() {
         filteredLogs = dateFilteredLogs.filter(log => 
             log.patientName.toLowerCase().includes(searchTerm) ||
             log.fileNumber.toLowerCase().includes(searchTerm) ||
-            log.procedure.toLowerCase().includes(searchTerm)
+            log.procedure.toLowerCase().includes(searchTerm) ||
+            (log.age && log.age.toString().includes(searchTerm)) ||
+            (log.gender && log.gender.toLowerCase().includes(searchTerm))
         );
     } else {
         filteredLogs = [...dateFilteredLogs];
@@ -1352,6 +1370,8 @@ function applyPatientsDateFilter() {
 // --- CHARTS ---
 function renderCharts() {
     renderPatientTypeChart();
+    renderGenderChart();
+    renderAgeGroupChart();
     renderRevenueChart();
     renderProcedureChart();
 }
@@ -1389,6 +1409,160 @@ function renderPatientTypeChart() {
                         font: {
                             size: 14
                         }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderGenderChart() {
+    const ctx = document.getElementById('genderChart').getContext('2d');
+    
+    if (charts.gender) {
+        charts.gender.destroy();
+    }
+    
+    const filteredLogs = getFilteredPatientLogs();
+    const maleCount = filteredLogs.filter(log => log.gender === 'male').length;
+    const femaleCount = filteredLogs.filter(log => log.gender === 'female').length;
+    const unknownCount = filteredLogs.filter(log => !log.gender || log.gender === '').length;
+    
+    const data = [];
+    const labels = [];
+    const colors = [];
+    
+    if (maleCount > 0) {
+        labels.push('Male');
+        data.push(maleCount);
+        colors.push('#3b82f6');
+    }
+    if (femaleCount > 0) {
+        labels.push('Female');
+        data.push(femaleCount);
+        colors.push('#ec4899');
+    }
+    if (unknownCount > 0) {
+        labels.push('Unknown');
+        data.push(unknownCount);
+        colors.push('#6b7280');
+    }
+    
+    charts.gender = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAgeGroupChart() {
+    const ctx = document.getElementById('ageGroupChart').getContext('2d');
+    
+    if (charts.ageGroup) {
+        charts.ageGroup.destroy();
+    }
+    
+    const filteredLogs = getFilteredPatientLogs();
+    
+    // Define age groups
+    const ageGroups = {
+        '0-12': 0,      // Children
+        '13-17': 0,     // Teenagers
+        '18-29': 0,     // Young Adults
+        '30-49': 0,     // Adults
+        '50-64': 0,     // Middle-aged
+        '65+': 0,       // Seniors
+        'Unknown': 0    // No age specified
+    };
+    
+    filteredLogs.forEach(log => {
+        const age = log.age;
+        if (!age || age < 0) {
+            ageGroups['Unknown']++;
+        } else if (age <= 12) {
+            ageGroups['0-12']++;
+        } else if (age <= 17) {
+            ageGroups['13-17']++;
+        } else if (age <= 29) {
+            ageGroups['18-29']++;
+        } else if (age <= 49) {
+            ageGroups['30-49']++;
+        } else if (age <= 64) {
+            ageGroups['50-64']++;
+        } else {
+            ageGroups['65+']++;
+        }
+    });
+    
+    // Filter out age groups with 0 counts
+    const labels = [];
+    const data = [];
+    const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#6b7280', '#9ca3af'];
+    const backgroundColors = [];
+    
+    Object.entries(ageGroups).forEach(([label, count], index) => {
+        if (count > 0) {
+            labels.push(label);
+            data.push(count);
+            backgroundColors.push(colors[index % colors.length]);
+        }
+    });
+    
+    charts.ageGroup = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Patients',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderWidth: 0,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: '#f1f5f9'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#f1f5f9'
                     }
                 }
             }
@@ -1600,6 +1774,10 @@ function handleSettingsSubmit(e) {
 async function init() {
     // Load patient logs from localStorage
     patientLogs = JSON.parse(localStorage.getItem('patientLogs') || '[]');
+    
+    // Migrate existing patient data to include age and gender fields
+    migratePatientData();
+    
     filteredLogs = [...patientLogs];
     
     // Load price lists
@@ -1618,435 +1796,31 @@ async function init() {
     updateStats();
 }
 
-// --- FILE UPLOAD FUNCTIONALITY ---
-function setupFileUploads() {
-    const cashFileInput = document.getElementById('cash-file-input');
-    const insuranceFileInput = document.getElementById('insurance-file-input');
-    const cashUploadBtn = document.getElementById('upload-cash-btn');
-    const insuranceUploadBtn = document.getElementById('upload-insurance-btn');
-    const cashUploadArea = document.getElementById('cash-upload-area');
-    const insuranceUploadArea = document.getElementById('insurance-upload-area');
-    const insuranceSelect = document.getElementById('insurance-select');
+// --- DATA MIGRATION ---
+function migratePatientData() {
+    let dataChanged = false;
     
-    // File input change handlers
-    cashFileInput.addEventListener('change', (e) => handleFileSelect(e, 'cash'));
-    insuranceFileInput.addEventListener('change', (e) => handleFileSelect(e, 'insurance'));
-    
-    // Upload button handlers
-    cashUploadBtn.addEventListener('click', () => uploadCashProcedures());
-    insuranceUploadBtn.addEventListener('click', () => uploadInsuranceProcedures());
-    
-    // Insurance company selection
-    insuranceSelect.addEventListener('change', handleInsuranceCompanySelection);
-    
-    // New company functionality
-    setupNewCompanyHandlers();
-    
-    // Drag and drop functionality
-    setupDragAndDrop(cashUploadArea, cashFileInput, 'cash');
-    setupDragAndDrop(insuranceUploadArea, insuranceFileInput, 'insurance');
-}
-
-function setupDragAndDrop(area, input, type) {
-    area.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        area.classList.add('dragover');
+    patientLogs = patientLogs.map(log => {
+        const updatedLog = { ...log };
+        
+        // Add age field if missing
+        if (!updatedLog.hasOwnProperty('age')) {
+            updatedLog.age = null;
+            dataChanged = true;
+        }
+        
+        // Add gender field if missing
+        if (!updatedLog.hasOwnProperty('gender')) {
+            updatedLog.gender = null;
+            dataChanged = true;
+        }
+        
+        return updatedLog;
     });
     
-    area.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        area.classList.remove('dragover');
-    });
-    
-    area.addEventListener('drop', (e) => {
-        e.preventDefault();
-        area.classList.remove('dragover');
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            const file = files[0];
-            if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-                input.files = files;
-                handleFileSelect({ target: input }, type);
-            } else {
-                showError('Please upload only Excel files (.xlsx)');
-            }
-        }
-    });
-}
-
-function handleFileSelect(e, type) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Validate file type
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-        showError('Please select an Excel file (.xlsx)');
-        return;
-    }
-    
-    // Update UI
-    const fileInfo = document.getElementById(`${type}-file-info`);
-    const uploadBtn = document.getElementById(`upload-${type}-btn`);
-    
-    fileInfo.textContent = `📄 ${file.name} (${formatFileSize(file.size)})`;
-    fileInfo.style.display = 'block';
-    
-    if (type === 'cash') {
-        uploadBtn.disabled = false;
-    } else {
-        checkInsuranceUploadReady();
-    }
-}
-
-function handleInsuranceCompanySelection() {
-    const insuranceSelect = document.getElementById('insurance-select');
-    const selectedValue = insuranceSelect.value;
-    
-    if (selectedValue === '__ADD_NEW__') {
-        showNewCompanyInput();
-    } else {
-        hideNewCompanyInput();
-        checkInsuranceUploadReady();
-    }
-}
-
-function setupNewCompanyHandlers() {
-    const newCompanyInput = document.getElementById('new-company-name');
-    const confirmBtn = document.getElementById('confirm-new-company');
-    const cancelBtn = document.getElementById('cancel-new-company');
-    
-    // Input validation
-    newCompanyInput.addEventListener('input', validateNewCompanyInput);
-    newCompanyInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (!confirmBtn.disabled) {
-                addNewInsuranceCompany();
-            }
-        }
-    });
-    
-    // Button handlers
-    confirmBtn.addEventListener('click', addNewInsuranceCompany);
-    cancelBtn.addEventListener('click', cancelNewCompany);
-}
-
-function validateNewCompanyInput() {
-    const input = document.getElementById('new-company-name');
-    const confirmBtn = document.getElementById('confirm-new-company');
-    const companyName = input.value.trim();
-    
-    // Check if name is valid and not already exists
-    const isValid = companyName.length >= 2 && !companyAlreadyExists(companyName);
-    confirmBtn.disabled = !isValid;
-    
-    // Update input styling
-    if (companyName.length > 0) {
-        if (companyAlreadyExists(companyName)) {
-            input.style.borderColor = '#ef4444';
-            input.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
-        } else if (companyName.length >= 2) {
-            input.style.borderColor = '#10b981';
-            input.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
-        } else {
-            input.style.borderColor = '#d9e0fe';
-            input.style.boxShadow = 'none';
-        }
-    } else {
-        input.style.borderColor = '#d9e0fe';
-        input.style.boxShadow = 'none';
-    }
-}
-
-function companyAlreadyExists(companyName) {
-    const normalizedName = companyName.trim().toUpperCase();
-    return insuranceCompanies.some(company => 
-        company.name.toUpperCase() === normalizedName
-    );
-}
-
-function showNewCompanyInput() {
-    const wrapper = document.getElementById('new-company-wrapper');
-    const input = document.getElementById('new-company-name');
-    
-    wrapper.style.display = 'block';
-    input.focus();
-    
-    // Reset input state
-    input.value = '';
-    input.style.borderColor = '#d9e0fe';
-    input.style.boxShadow = 'none';
-    document.getElementById('confirm-new-company').disabled = true;
-    
-    checkInsuranceUploadReady();
-}
-
-function hideNewCompanyInput() {
-    const wrapper = document.getElementById('new-company-wrapper');
-    wrapper.style.display = 'none';
-}
-
-function addNewInsuranceCompany() {
-    const input = document.getElementById('new-company-name');
-    const companyName = input.value.trim();
-    
-    if (companyName.length < 2) {
-        showError('Company name must be at least 2 characters long');
-        return;
-    }
-    
-    if (companyAlreadyExists(companyName)) {
-        showError('This insurance company already exists');
-        return;
-    }
-    
-    // Add to insurance companies list
-    const newCompany = { name: companyName, file: companyName + '.xlsx' };
-    insuranceCompanies.push(newCompany);
-    
-    // Add to dropdown (before the "Add New" option)
-    const select = document.getElementById('insurance-select');
-    const addNewOption = select.querySelector('option[value="__ADD_NEW__"]');
-    const newOption = document.createElement('option');
-    newOption.value = companyName;
-    newOption.textContent = companyName;
-    select.insertBefore(newOption, addNewOption);
-    
-    // Select the new company
-    select.value = companyName;
-    
-    // Hide the input and show success
-    hideNewCompanyInput();
-    showSuccess(`Insurance company "${companyName}" added successfully!`);
-    
-    // Update insurance companies in form dropdowns (for Add New Patient)
-    updateInsuranceDropdowns();
-    
-    // Save to localStorage
-    localStorage.setItem('uploadedInsuranceCompanies', JSON.stringify(insuranceCompanies));
-    
-    checkInsuranceUploadReady();
-}
-
-function cancelNewCompany() {
-    const select = document.getElementById('insurance-select');
-    select.value = '';
-    hideNewCompanyInput();
-    checkInsuranceUploadReady();
-}
-
-function updateInsuranceDropdowns() {
-    // Update the Add New Patient form dropdown
-    populateInsuranceDropdown();
-    
-    // Update the Edit Patient form dropdown if it exists
-    const editSelect = document.getElementById('edit-insurance-company');
-    if (editSelect) {
-        const currentValue = editSelect.value;
-        editSelect.innerHTML = '<option value="">Select insurance company</option>';
-        
-        insuranceCompanies.forEach(company => {
-            const option = document.createElement('option');
-            option.value = company.name;
-            option.textContent = company.name;
-            editSelect.appendChild(option);
-        });
-        
-        // Restore selected value if it still exists
-        if (currentValue && insuranceCompanies.find(c => c.name === currentValue)) {
-            editSelect.value = currentValue;
-        }
-    }
-    
-    // Update the Settings page dropdown
-    populateSettingsInsuranceDropdown();
-}
-
-function checkInsuranceUploadReady() {
-    const insuranceFile = document.getElementById('insurance-file-input').files[0];
-    const insuranceCompany = document.getElementById('insurance-select').value;
-    const uploadBtn = document.getElementById('upload-insurance-btn');
-    
-    // Don't enable if "Add New Company" is selected or no valid company is selected
-    uploadBtn.disabled = !(insuranceFile && insuranceCompany && insuranceCompany !== '__ADD_NEW__');
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-async function uploadCashProcedures() {
-    const fileInput = document.getElementById('cash-file-input');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        showError('Please select a file first');
-        return;
-    }
-    
-    try {
-        // Show loading state
-        const uploadBtn = document.getElementById('upload-cash-btn');
-        const originalText = uploadBtn.innerHTML;
-        uploadBtn.innerHTML = '<span>Uploading...</span>';
-        uploadBtn.disabled = true;
-        
-        // Read and parse the Excel file
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        
-        // Parse using existing function
-        const procedures = parseCashProcedures(workbook);
-        
-        if (procedures.length === 0) {
-            throw new Error('No valid procedures found in the file. Please check the format.');
-        }
-        
-        // Validate required fields
-        const invalidProcedures = procedures.filter(p => !p.procedure || !p.price);
-        if (invalidProcedures.length > 0) {
-            throw new Error(`Found ${invalidProcedures.length} procedures with missing data. Please check your file format.`);
-        }
-        
-        // Update the global cash procedures
-        cashProcedures = procedures;
-        
-        // Save to localStorage for persistence
-        localStorage.setItem('uploadedCashProcedures', JSON.stringify(procedures));
-        
-        showSuccess(`Successfully uploaded ${procedures.length} cash procedures!`);
-        
-        // Reset the form
-        fileInput.value = '';
-        document.getElementById('cash-file-info').style.display = 'none';
-        uploadBtn.innerHTML = originalText;
-        uploadBtn.disabled = true;
-        
-    } catch (error) {
-        showError(`Error uploading cash procedures: ${error.message}`);
-        
-        // Reset button state
-        const uploadBtn = document.getElementById('upload-cash-btn');
-        uploadBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7,10 12,15 17,10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Upload Cash Procedures
-        `;
-        uploadBtn.disabled = false;
-    }
-}
-
-async function uploadInsuranceProcedures() {
-    const fileInput = document.getElementById('insurance-file-input');
-    const insuranceSelect = document.getElementById('insurance-select');
-    const file = fileInput.files[0];
-    const companyName = insuranceSelect.value;
-    
-    if (!file || !companyName) {
-        showError('Please select both a file and insurance company');
-        return;
-    }
-    
-    try {
-        // Show loading state
-        const uploadBtn = document.getElementById('upload-insurance-btn');
-        const originalText = uploadBtn.innerHTML;
-        uploadBtn.innerHTML = '<span>Uploading...</span>';
-        uploadBtn.disabled = true;
-        
-        // Read and parse the Excel file
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        
-        // Parse using existing function
-        const procedures = parseInsuranceProcedures(workbook);
-        
-        if (procedures.length === 0) {
-            throw new Error('No valid procedures found in the file. Please check the format.');
-        }
-        
-        // Validate required fields
-        const invalidProcedures = procedures.filter(p => !p.procedure || !p.price);
-        if (invalidProcedures.length > 0) {
-            throw new Error(`Found ${invalidProcedures.length} procedures with missing data. Please check your file format.`);
-        }
-        
-        // Update the global insurance procedures
-        const normalizedCompanyName = normalizeCompanyName(companyName);
-        insuranceProcedures[normalizedCompanyName] = procedures;
-        
-        // Update insurance companies list if not already present
-        const existingCompany = insuranceCompanies.find(c => c.name === companyName);
-        if (!existingCompany) {
-            insuranceCompanies.push({ name: companyName, file: companyName + '.xlsx' });
-        }
-        
-        // Save to localStorage for persistence
-        localStorage.setItem('uploadedInsuranceProcedures', JSON.stringify(insuranceProcedures));
-        localStorage.setItem('uploadedInsuranceCompanies', JSON.stringify(insuranceCompanies));
-        
-        showSuccess(`Successfully uploaded ${procedures.length} procedures for ${companyName}!`);
-        
-        // Reset the form
-        fileInput.value = '';
-        insuranceSelect.value = '';
-        document.getElementById('insurance-file-info').style.display = 'none';
-        uploadBtn.innerHTML = originalText;
-        uploadBtn.disabled = true;
-        
-    } catch (error) {
-        showError(`Error uploading insurance procedures: ${error.message}`);
-        
-        // Reset button state
-        const uploadBtn = document.getElementById('upload-insurance-btn');
-        uploadBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7,10 12,15 17,10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Upload Insurance Procedures
-        `;
-        uploadBtn.disabled = false;
-    }
-}
-
-// Load uploaded procedures from localStorage on initialization
-function loadUploadedProcedures() {
-    // Load cash procedures
-    const savedCashProcedures = localStorage.getItem('uploadedCashProcedures');
-    if (savedCashProcedures) {
-        const uploadedCash = JSON.parse(savedCashProcedures);
-        if (uploadedCash.length > 0) {
-            cashProcedures = uploadedCash;
-        }
-    }
-    
-    // Load insurance procedures
-    const savedInsuranceProcedures = localStorage.getItem('uploadedInsuranceProcedures');
-    const savedInsuranceCompanies = localStorage.getItem('uploadedInsuranceCompanies');
-    
-    if (savedInsuranceProcedures) {
-        const uploadedInsurance = JSON.parse(savedInsuranceProcedures);
-        Object.assign(insuranceProcedures, uploadedInsurance);
-    }
-    
-    if (savedInsuranceCompanies) {
-        const uploadedCompanies = JSON.parse(savedInsuranceCompanies);
-        // Merge with existing companies, avoiding duplicates
-        uploadedCompanies.forEach(company => {
-            const exists = insuranceCompanies.find(c => c.name === company.name);
-            if (!exists) {
-                insuranceCompanies.push(company);
-            }
-        });
+    // Save updated data if changes were made
+    if (dataChanged) {
+        localStorage.setItem('patientLogs', JSON.stringify(patientLogs));
+        console.log('Patient data migrated to include age and gender fields');
     }
 }

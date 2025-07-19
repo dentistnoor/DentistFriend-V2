@@ -824,33 +824,72 @@ body {
 .table-container {
     background: white;
     border-radius: 16px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     box-shadow: 0 2px 10px rgba(1, 8, 38, 0.05);
     border: 1px solid #d9e0fe;
+    max-width: 100%;
 }
 
 .patients-table {
     width: 100%;
+    min-width: 1200px; /* Ensure minimum width for all columns */
     border-collapse: collapse;
+    table-layout: fixed; /* Fixed layout for better column control */
 }
 
 .patients-table th,
 .patients-table td {
-    padding: 16px;
+    padding: 12px 8px;
     text-align: left;
     border-bottom: 1px solid #d9e0fe;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+/* Specific column widths */
+.patients-table th:nth-child(1), .patients-table td:nth-child(1) { width: 90px; } /* Visit Date */
+.patients-table th:nth-child(2), .patients-table td:nth-child(2) { width: 120px; } /* Patient Name */
+.patients-table th:nth-child(3), .patients-table td:nth-child(3) { width: 80px; } /* File Number */
+.patients-table th:nth-child(4), .patients-table td:nth-child(4) { width: 50px; text-align: center; } /* Age */
+.patients-table th:nth-child(5), .patients-table td:nth-child(5) { width: 80px; text-align: center; } /* Gender */
+.patients-table th:nth-child(6), .patients-table td:nth-child(6) { width: 100px; text-align: center; } /* Type */
+.patients-table th:nth-child(7), .patients-table td:nth-child(7) { width: 100px; } /* Insurance */
+.patients-table th:nth-child(8), .patients-table td:nth-child(8) { width: 150px; } /* Procedure */
+.patients-table th:nth-child(9), .patients-table td:nth-child(9) { width: 80px; text-align: right; } /* Price */
+.patients-table th:nth-child(10), .patients-table td:nth-child(10) { width: 80px; text-align: center; } /* Discount */
+.patients-table th:nth-child(11), .patients-table td:nth-child(11) { width: 90px; text-align: right; } /* Final Amount */
+.patients-table th:nth-child(12), .patients-table td:nth-child(12) { width: 120px; } /* Remarks */
+
+/* Actions column - sticky to the right */
+.patients-table th:nth-child(13), .patients-table td:nth-child(13) { 
+    width: 100px; 
+    position: sticky; 
+    right: 0; 
+    background: #f9fafb; 
+    z-index: 10;
+    border-left: 1px solid #d9e0fe;
+    text-align: center;
+}
+
+.patients-table td:nth-child(13) {
+    background: white;
+}
+
+.patients-table tr:hover td:nth-child(13) {
+    background: #f9fafb; /* Ensure sticky column matches hover background */
 }
 
 .patients-table th {
     background: #f9fafb;
     font-weight: 600;
     color: #010826;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .patients-table td {
     color: #2f3828;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .patients-table tr:hover {
@@ -862,7 +901,6 @@ body {
 }
 
 .remarks-cell {
-    max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1004,7 +1042,7 @@ body {
 /* Charts */
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 24px;
 }
 
@@ -1061,11 +1099,14 @@ body {
 
 /* Badges */
 .badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
+    display: inline-block;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .badge.cash {
@@ -1076,6 +1117,21 @@ body {
 .badge.insurance {
     background-color: #cce5ff;
     color: #004085;
+}
+
+.badge.male {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.badge.female {
+    background-color: #fce7f3;
+    color: #be185d;
+}
+
+.badge.unknown {
+    background-color: #f3f4f6;
+    color: #6b7280;
 }
 
 /* Success and Error Messages */
