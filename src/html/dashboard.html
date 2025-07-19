@@ -204,6 +204,23 @@
                             </div>
                         </div>
                         
+                        <!-- Age and Gender Row -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patient-age">Age</label>
+                                <input type="number" id="patient-age" name="patient-age" required placeholder="Enter age" min="1" max="120">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="patient-gender">Gender</label>
+                                <select id="patient-gender" name="patient-gender" required>
+                                    <option value="">Select gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        
                         <!-- Insurance Company Row (full width when visible) -->
                         <div class="form-row-single">
                             <div class="form-group" id="insurance-company-row" style="display:none;">
@@ -309,7 +326,7 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
-                        <input type="text" id="search-patients" placeholder="Search patients by name, file number, or procedure...">
+                        <input type="text" id="search-patients" placeholder="Search patients by name, file number, procedure, age, or gender...">
                     </div>
                     
                     <div class="filter-buttons">
@@ -327,6 +344,8 @@
                                 <th>Visit Date</th>
                                 <th>Patient Name</th>
                                 <th>File Number</th>
+                                <th>Age</th>
+                                <th>Gender</th>
                                 <th>Type</th>
                                 <th>Insurance</th>
                                 <th>Procedure</th>
@@ -407,6 +426,20 @@
                             <h3>Patient Type Distribution</h3>
                         </div>
                         <canvas id="patientTypeChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Gender Distribution</h3>
+                        </div>
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Age Group Distribution</h3>
+                        </div>
+                        <canvas id="ageGroupChart"></canvas>
                     </div>
                     
                     <div class="chart-card">
@@ -509,6 +542,23 @@
                     <div class="form-group">
                         <label for="edit-file-number">File Number</label>
                         <input type="text" id="edit-file-number" name="file-number" required placeholder="Enter file number">
+                    </div>
+                </div>
+                
+                <!-- Age and Gender Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-patient-age">Age</label>
+                        <input type="number" id="edit-patient-age" name="patient-age" required placeholder="Enter age" min="1" max="120">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-patient-gender">Gender</label>
+                        <select id="edit-patient-gender" name="patient-gender" required>
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
                     </div>
                 </div>
                 

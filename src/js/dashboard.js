@@ -299,6 +299,8 @@ function handleFormSubmit(e) {
         visitDate: formData.get('visit-date'),
         patientName: formData.get('patient-name'),
         fileNumber: formData.get('file-number'),
+        age: Number(formData.get('patient-age')),
+        gender: formData.get('patient-gender'),
         patientType: formData.get('patient-type'),
         insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
         procedure: formData.get('procedure'),
@@ -765,6 +767,8 @@ function renderPatientTable() {
             <td>${formatDateToDDMMYYYY(log.visitDate)}</td>
             <td>${log.patientName}</td>
             <td>${log.fileNumber}</td>
+            <td>${log.age || 'N/A'}</td>
+            <td><span class="badge ${log.gender || 'unknown'}">${log.gender ? log.gender.charAt(0).toUpperCase() + log.gender.slice(1) : 'N/A'}</span></td>
             <td><span class="badge ${log.patientType}">${log.patientType}</span></td>
             <td>${log.insuranceCompany || '-'}</td>
             <td>${log.procedure}</td>
@@ -814,6 +818,8 @@ function editPatient(id) {
     document.getElementById('edit-visit-date').value = patient.visitDate;
     document.getElementById('edit-patient-name').value = patient.patientName;
     document.getElementById('edit-file-number').value = patient.fileNumber;
+    document.getElementById('edit-patient-age').value = patient.age || '';
+    document.getElementById('edit-patient-gender').value = patient.gender || '';
     document.getElementById('edit-patient-type').value = patient.patientType;
     document.getElementById('edit-price').value = patient.price;
     document.getElementById('edit-discount').value = patient.discount || '';
@@ -925,6 +931,8 @@ function handleEditFormSubmit(e) {
         visitDate: formData.get('visit-date'),
         patientName: formData.get('patient-name'),
         fileNumber: formData.get('file-number'),
+        age: Number(formData.get('patient-age')),
+        gender: formData.get('patient-gender'),
         patientType: formData.get('patient-type'),
         insuranceCompany: formData.get('patient-type') === 'insurance' ? formData.get('insurance-company') : '',
         procedure: formData.get('procedure'),
@@ -1274,7 +1282,9 @@ function applyPatientsDateFilter() {
         filteredLogs = dateFilteredLogs.filter(log => 
             log.patientName.toLowerCase().includes(searchTerm) ||
             log.fileNumber.toLowerCase().includes(searchTerm) ||
-            log.procedure.toLowerCase().includes(searchTerm)
+            log.procedure.toLowerCase().includes(searchTerm) ||
+            (log.age && log.age.toString().includes(searchTerm)) ||
+            (log.gender && log.gender.toLowerCase().includes(searchTerm))
         );
     } else {
         filteredLogs = [...dateFilteredLogs];
@@ -1295,6 +1305,8 @@ function applyPatientsDateFilter() {
 // --- CHARTS ---
 function renderCharts() {
     renderPatientTypeChart();
+    renderGenderChart();
+    renderAgeGroupChart();
     renderRevenueChart();
     renderProcedureChart();
 }
@@ -1332,6 +1344,160 @@ function renderPatientTypeChart() {
                         font: {
                             size: 14
                         }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderGenderChart() {
+    const ctx = document.getElementById('genderChart').getContext('2d');
+    
+    if (charts.gender) {
+        charts.gender.destroy();
+    }
+    
+    const filteredLogs = getFilteredPatientLogs();
+    const maleCount = filteredLogs.filter(log => log.gender === 'male').length;
+    const femaleCount = filteredLogs.filter(log => log.gender === 'female').length;
+    const unknownCount = filteredLogs.filter(log => !log.gender || log.gender === '').length;
+    
+    const data = [];
+    const labels = [];
+    const colors = [];
+    
+    if (maleCount > 0) {
+        labels.push('Male');
+        data.push(maleCount);
+        colors.push('#3b82f6');
+    }
+    if (femaleCount > 0) {
+        labels.push('Female');
+        data.push(femaleCount);
+        colors.push('#ec4899');
+    }
+    if (unknownCount > 0) {
+        labels.push('Unknown');
+        data.push(unknownCount);
+        colors.push('#6b7280');
+    }
+    
+    charts.gender = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAgeGroupChart() {
+    const ctx = document.getElementById('ageGroupChart').getContext('2d');
+    
+    if (charts.ageGroup) {
+        charts.ageGroup.destroy();
+    }
+    
+    const filteredLogs = getFilteredPatientLogs();
+    
+    // Define age groups
+    const ageGroups = {
+        '0-12': 0,      // Children
+        '13-17': 0,     // Teenagers
+        '18-29': 0,     // Young Adults
+        '30-49': 0,     // Adults
+        '50-64': 0,     // Middle-aged
+        '65+': 0,       // Seniors
+        'Unknown': 0    // No age specified
+    };
+    
+    filteredLogs.forEach(log => {
+        const age = log.age;
+        if (!age || age < 0) {
+            ageGroups['Unknown']++;
+        } else if (age <= 12) {
+            ageGroups['0-12']++;
+        } else if (age <= 17) {
+            ageGroups['13-17']++;
+        } else if (age <= 29) {
+            ageGroups['18-29']++;
+        } else if (age <= 49) {
+            ageGroups['30-49']++;
+        } else if (age <= 64) {
+            ageGroups['50-64']++;
+        } else {
+            ageGroups['65+']++;
+        }
+    });
+    
+    // Filter out age groups with 0 counts
+    const labels = [];
+    const data = [];
+    const colors = ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#6b7280', '#9ca3af'];
+    const backgroundColors = [];
+    
+    Object.entries(ageGroups).forEach(([label, count], index) => {
+        if (count > 0) {
+            labels.push(label);
+            data.push(count);
+            backgroundColors.push(colors[index % colors.length]);
+        }
+    });
+    
+    charts.ageGroup = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Patients',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderWidth: 0,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: '#f1f5f9'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#f1f5f9'
                     }
                 }
             }
