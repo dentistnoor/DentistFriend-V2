@@ -225,7 +225,6 @@ body {
   text-decoration: underline;
 }
 
-/* Responsive Design */
 @media (max-width: 480px) {
   .container {
     padding: 16px;
@@ -245,5 +244,49 @@ body {
 
   .logo {
     font-size: 50px;
+  }
+}
+
+.success-message,
+.error-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  z-index: 10000;
+  animation: slideIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.success-message {
+  background: #10b981;
+  color: white;
+  border: 1px solid #059669;
+}
+
+.error-message {
+  background: #ef4444;
+  color: white;
+  border: 1px solid #dc2626;
+}
+
+.success-message svg,
+.error-message svg {
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

@@ -1,34 +1,60 @@
-// --- GLOBAL STATE ---
-let procedureCounter = 0;
+import {
+  auth,
+  db,
+  signOut,
+  onAuthStateChanged,
+  addDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "./firebase-config.js";
 
-// --- INITIALIZATION ---
+let procedureCounter = 0;
+let currentUser = null;
+
 document.addEventListener("DOMContentLoaded", function () {
-  // Check authentication
   checkAuth();
 
-  // Setup event listeners
   setupEventListeners();
 });
 
 function checkAuth() {
-  const userInfo = localStorage.getItem("userInfo");
-  if (!userInfo) {
-    window.location.href = "signin.html";
-    return;
-  }
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
 
-  const user = JSON.parse(userInfo);
-  document.getElementById("doctor-name").textContent =
-    user.doctorName || "Doctor";
-  document.getElementById("doctor-email").textContent = user.email;
+      const userInfo = localStorage.getItem("userInfo");
+      if (userInfo) {
+        const userData = JSON.parse(userInfo);
+        document.getElementById("doctor-name").textContent =
+          userData.doctorName || "Doctor";
+        document.getElementById("doctor-email").textContent = userData.email;
+      } else {
+        document.getElementById("doctor-name").textContent =
+          user.displayName || "Doctor";
+        document.getElementById("doctor-email").textContent = user.email;
+      }
+    } else {
+      localStorage.removeItem("userInfo");
+      window.location.href = "signin.html";
+    }
+  });
 }
 
 function logout() {
-  localStorage.removeItem("userInfo");
-  window.location.href = "signin.html";
+  signOut(auth)
+    .then(() => {
+      localStorage.removeItem("userInfo");
+      window.location.href = "signin.html";
+    })
+    .catch((error) => {
+      showError("Error signing out. Please try again.");
+    });
 }
 
-// --- UTILS ---
+window.logout = logout;
+
 function formatDateToDDMMYYYY(dateString) {
   const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, "0");
@@ -37,37 +63,35 @@ function formatDateToDDMMYYYY(dateString) {
   return `${day}/${month}/${year}`;
 }
 
-// --- EVENT LISTENERS ---
 function setupEventListeners() {
-  // Form submission
   const patientForm = document.getElementById("patient-form");
   if (patientForm) {
     patientForm.addEventListener("submit", handleFormSubmit);
   }
 
-  // Patient type change
   const patientTypeSelect = document.getElementById("patient-type");
   if (patientTypeSelect) {
     patientTypeSelect.addEventListener("change", handlePatientTypeChange);
   }
 
-  // Add procedure button
   const addProcedureBtn = document.getElementById("add-procedure-btn");
   if (addProcedureBtn) {
     addProcedureBtn.addEventListener("click", addProcedureItem);
   }
 
-  // Setup sidebar toggle
   setupSidebarToggle();
 
-  // Setup date picker
   setupDatePicker();
 }
 
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
   e.preventDefault();
 
-  // Get form data
+  if (!currentUser) {
+    showError("You must be logged in to add patients");
+    return;
+  }
+
   const formData = new FormData(e.target);
   const patientData = {
     visitDate: formData.get("visit-date"),
@@ -81,9 +105,9 @@ function handleFormSubmit(e) {
     totalAmount: parseFloat(document.getElementById("total-amount").value) || 0,
     remarks: formData.get("remarks") || "",
     timestamp: new Date().toISOString(),
+    userId: currentUser.uid,
   };
 
-  // Validate required fields
   if (
     !patientData.visitDate ||
     !patientData.patientName ||
@@ -96,20 +120,34 @@ function handleFormSubmit(e) {
     return;
   }
 
-  // Store in localStorage (for now)
-  const existingPatients = JSON.parse(localStorage.getItem("patients") || "[]");
-  existingPatients.push(patientData);
-  localStorage.setItem("patients", JSON.stringify(existingPatients));
+  try {
+    const submitBtn = e.target.querySelector(".submit-btn");
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = "<span>Adding Patient...</span>";
+    submitBtn.disabled = true;
 
-  // Show success message
-  showSuccess("Patient added successfully!");
+    await addDoc(
+      collection(db, "doctors", currentUser.uid, "patients"),
+      patientData
+    );
 
-  // Reset form
-  e.target.reset();
-  clearAllProcedures();
-  document.getElementById("selected-date-display").textContent =
-    "Select a date";
-  document.getElementById("visit-date").value = "";
+    showSuccess("Patient added successfully!");
+
+    e.target.reset();
+    clearAllProcedures();
+    document.getElementById("selected-date-display").textContent =
+      "Select a date";
+    document.getElementById("visit-date").value = "";
+
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  } catch (error) {
+    showError("Failed to add patient. Please try again.");
+
+    const submitBtn = e.target.querySelector(".submit-btn");
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
 }
 
 function handlePatientTypeChange(e) {
@@ -155,20 +193,19 @@ function addProcedureItem() {
 
   proceduresList.appendChild(procedureItem);
 
-  // Add event listeners for price calculation
   const priceInput = document.getElementById(
     `procedure-price-${procedureCounter}`
   );
   priceInput.addEventListener("input", () => updateTotalAmount());
 }
 
-function removeProcedureItem(procedureId) {
+window.removeProcedureItem = function (procedureId) {
   const procedureItem = document.getElementById(`procedure-${procedureId}`);
   if (procedureItem) {
     procedureItem.remove();
     updateTotalAmount();
   }
-}
+};
 
 function getProceduresData() {
   const procedures = [];
@@ -216,7 +253,6 @@ function clearAllProcedures() {
   updateTotalAmount();
 }
 
-// --- SIDEBAR TOGGLE ---
 function setupSidebarToggle() {
   const sidebarToggle = document.getElementById("sidebar-toggle");
   const sidebar = document.querySelector(".sidebar");
@@ -250,7 +286,6 @@ function setupSidebarToggle() {
     mainContent.classList.toggle("sidebar-collapsed");
   }
 
-  // Event listeners
   if (sidebarToggle) {
     sidebarToggle.addEventListener("click", toggleSidebar);
   }
@@ -259,7 +294,6 @@ function setupSidebarToggle() {
     sidebarOverlay.addEventListener("click", closeMobileSidebar);
   }
 
-  // Handle window resize
   function handleResize() {
     if (!isMobile()) {
       sidebar.classList.remove("mobile-open");
@@ -270,7 +304,6 @@ function setupSidebarToggle() {
   window.addEventListener("resize", handleResize);
 }
 
-// --- DATE PICKER ---
 function setupDatePicker() {
   const datePickerTrigger = document.getElementById("date-picker-trigger");
   const calendarDropdown = document.getElementById("calendar-dropdown");
@@ -370,7 +403,6 @@ function setupDatePicker() {
     visitDateInput.value = date.toISOString().split("T")[0];
   }
 
-  // Event listeners
   if (datePickerTrigger) {
     datePickerTrigger.addEventListener("click", toggleDropdown);
   }
@@ -397,7 +429,6 @@ function setupDatePicker() {
     });
   }
 
-  // Close dropdown when clicking outside
   document.addEventListener("click", (e) => {
     if (
       !datePickerTrigger.contains(e.target) &&
@@ -408,9 +439,7 @@ function setupDatePicker() {
   });
 }
 
-// --- MESSAGES ---
 function showSuccess(message) {
-  // Create success message element
   const successDiv = document.createElement("div");
   successDiv.className = "success-message";
   successDiv.innerHTML = `
@@ -421,17 +450,14 @@ function showSuccess(message) {
     <span>${message}</span>
   `;
 
-  // Add to page
   document.body.appendChild(successDiv);
 
-  // Remove after 3 seconds
   setTimeout(() => {
     successDiv.remove();
   }, 3000);
 }
 
 function showError(message) {
-  // Create error message element
   const errorDiv = document.createElement("div");
   errorDiv.className = "error-message";
   errorDiv.innerHTML = `
@@ -443,10 +469,8 @@ function showError(message) {
     <span>${message}</span>
   `;
 
-  // Add to page
   document.body.appendChild(errorDiv);
 
-  // Remove after 3 seconds
   setTimeout(() => {
     errorDiv.remove();
   }, 3000);
