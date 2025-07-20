@@ -1,56 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DentistFriend - Sign Up</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦷</text></svg>">
-    <link rel="stylesheet" href="../css/sign.css">
-</head>
-<body>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦷</text></svg>"
+    />
+    <link rel="stylesheet" href="../css/sign.css" />
+  </head>
+  <body>
     <div class="container">
-        <div class="login-card">
-            <div class="logo-section">
-                <div class="logo">🦷</div>
-                <h1>DentistFriend</h1>
-                <p>Create your account to get started.</p>
-            </div>
-            
-            <form id="signup-form" class="login-form">
-                <div class="form-group">
-                    <label for="signup-doctor-name">Doctor Name</label>
-                    <input type="text" id="signup-doctor-name" name="signup-doctor-name" placeholder="Enter your full name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-email">Email Address</label>
-                    <input type="email" id="signup-email" name="signup-email" placeholder="Enter your email">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" name="signup-password" placeholder="Enter your password">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-sheets-url">Google Sheets URL</label>
-                    <input type="url" id="signup-sheets-url" name="signup-sheets-url" placeholder="Enter your Google Sheets URL">
-                </div>
-                
-                <button type="submit" class="login-btn">
-                    <span>Sign Up</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </button>
-            </form>
-            
-            <div class="switch-link">
-                Already have an account? <a href="signin.html">Sign In</a>
-            </div>
+      <div class="login-card">
+        <div class="logo-section">
+          <div class="logo">🦷</div>
+          <h1>DentistFriend</h1>
+          <p>Create your account to get started.</p>
         </div>
+
+        <form id="signup-form" class="login-form">
+          <div class="form-group">
+            <label for="signup-doctor-name">Doctor Name</label>
+            <input
+              type="text"
+              id="signup-doctor-name"
+              name="signup-doctor-name"
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-email">Email Address</label>
+            <input
+              type="email"
+              id="signup-email"
+              name="signup-email"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <input
+              type="password"
+              id="signup-password"
+              name="signup-password"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-sheets-url">Google Sheets URL</label>
+            <input
+              type="url"
+              id="signup-sheets-url"
+              name="signup-sheets-url"
+              placeholder="Enter your Google Sheets URL"
+            />
+          </div>
+
+          <button type="submit" class="login-btn">
+            <span>Sign Up</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </form>
+
+        <div class="switch-link">
+          Already have an account? <a href="signin.html">Sign In</a>
+        </div>
+      </div>
     </div>
-    
+
     <script src="../js/signup.js"></script>
-</body>
-</html> 
+  </body>
+</html>
