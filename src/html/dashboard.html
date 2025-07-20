@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DentistFriend - Record Manager</title>
+    <title>DentistFriend - Dashboard</title>
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦷</text></svg>"
     />
+    <link rel="stylesheet" href="../css/common.css" />
     <link rel="stylesheet" href="../css/dashboard.css" />
   </head>
   <body>
@@ -38,7 +39,7 @@
         <div class="user-section">
           <div class="user-info">
             <span class="greeting"
-              >Hello, Dr. <span id="doctor-name">Doctor</span></span
+              >Hello, <span id="doctor-name">Doctor</span></span
             >
             <span class="user-email" id="doctor-email">doctor@example.com</span>
           </div>
@@ -65,14 +66,9 @@
       <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
       <!-- Sidebar -->
-      <aside class="sidebar">
+      <aside class="sidebar collapsed">
         <nav class="nav-menu">
-          <a
-            href="#"
-            class="nav-item active"
-            data-tab="dashboard"
-            title="Dashboard"
-          >
+          <a href="dashboard.html" class="nav-item active" title="Dashboard">
             <svg
               width="20"
               height="20"
@@ -88,13 +84,53 @@
             </svg>
             <span>Dashboard</span>
           </a>
+          <a href="patients.html" class="nav-item" title="Patients">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Patients</span>
+          </a>
+          <a href="#" class="nav-item" title="Analytics">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 3v18h18"></path>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+            </svg>
+            <span>Analytics</span>
+          </a>
+          <a href="settings.html" class="nav-item" title="Settings">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+            </svg>
+            <span>Settings</span>
+          </a>
         </nav>
       </aside>
 
       <!-- Main Content -->
-      <main class="main-content">
-        <!-- Dashboard Tab -->
-        <div id="dashboard" class="tab-content active">
+      <main class="main-content sidebar-collapsed">
           <div class="page-header">
             <h2>Dashboard Overview</h2>
           </div>
@@ -106,7 +142,6 @@
             </div>
 
             <form id="patient-form" class="patient-form">
-              <!-- Visit Date and Patient Type Row -->
               <div class="form-row">
                 <div class="form-group">
                   <label for="visit-date">Visit Date</label>
@@ -221,7 +256,6 @@
                 </div>
               </div>
 
-              <!-- Patient Name and File Number Row -->
               <div class="form-row">
                 <div class="form-group">
                   <label for="patient-name">Patient Name</label>
@@ -246,7 +280,6 @@
                 </div>
               </div>
 
-              <!-- Age and Gender Row -->
               <div class="form-row">
                 <div class="form-group">
                   <label for="patient-age">Age</label>
@@ -271,7 +304,6 @@
                 </div>
               </div>
 
-              <!-- Insurance Company Row (full width when visible) -->
               <div class="form-row-single">
                 <div
                   class="form-group"
@@ -285,7 +317,6 @@
                 </div>
               </div>
 
-              <!-- Procedures Section -->
               <div class="procedures-section">
                 <div class="procedures-header">
                   <label>Procedures</label>
@@ -312,7 +343,6 @@
                   <!-- Procedure items will be added here dynamically -->
                 </div>
 
-                <!-- Total Amount Display -->
                 <div class="total-amount-row">
                   <div class="form-group">
                     <label for="total-amount">Total Amount (SAR)</label>
@@ -328,7 +358,6 @@
                 </div>
               </div>
 
-              <!-- Remarks Row (full width) -->
               <div class="form-row-single">
                 <div class="form-group">
                   <label for="remarks">Remarks</label>
@@ -336,7 +365,7 @@
                     id="remarks"
                     name="remarks"
                     rows="3"
-                    placeholder="Enter any additional notes or comments about the patient visit..."
+                    placeholder="Enter any notes or comments about the patient visit..."
                   ></textarea>
                 </div>
               </div>
@@ -360,6 +389,7 @@
       </main>
     </div>
 
+    <script type="module" src="../js/common.js"></script>
     <script type="module" src="../js/dashboard.js"></script>
   </body>
 </html>

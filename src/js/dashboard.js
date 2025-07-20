@@ -1,67 +1,19 @@
 import {
-  auth,
-  db,
-  signOut,
-  onAuthStateChanged,
-  addDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "./firebase-config.js";
+  checkAuth,
+  setupSidebar,
+  showSuccess,
+  showError,
+  getCurrentUser,
+} from "./common.js";
 
 let procedureCounter = 0;
-let currentUser = null;
 
 document.addEventListener("DOMContentLoaded", function () {
-  checkAuth();
-
-  setupEventListeners();
-});
-
-function checkAuth() {
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-
-      const userInfo = localStorage.getItem("userInfo");
-      if (userInfo) {
-        const userData = JSON.parse(userInfo);
-        document.getElementById("doctor-name").textContent =
-          userData.doctorName || "Doctor";
-        document.getElementById("doctor-email").textContent = userData.email;
-      } else {
-        document.getElementById("doctor-name").textContent =
-          user.displayName || "Doctor";
-        document.getElementById("doctor-email").textContent = user.email;
-      }
-    } else {
-      localStorage.removeItem("userInfo");
-      window.location.href = "signin.html";
-    }
+  checkAuth().then(() => {
+    setupSidebar();
+    setupEventListeners();
   });
-}
-
-function logout() {
-  signOut(auth)
-    .then(() => {
-      localStorage.removeItem("userInfo");
-      window.location.href = "signin.html";
-    })
-    .catch((error) => {
-      showError("Error signing out. Please try again.");
-    });
-}
-
-window.logout = logout;
-
-function formatDateToDDMMYYYY(dateString) {
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
+});
 
 function setupEventListeners() {
   const patientForm = document.getElementById("patient-form");
@@ -79,14 +31,13 @@ function setupEventListeners() {
     addProcedureBtn.addEventListener("click", addProcedureItem);
   }
 
-  setupSidebarToggle();
-
   setupDatePicker();
 }
 
 async function handleFormSubmit(e) {
   e.preventDefault();
 
+  const currentUser = getCurrentUser();
   if (!currentUser) {
     showError("You must be logged in to add patients");
     return;
@@ -94,6 +45,7 @@ async function handleFormSubmit(e) {
 
   const formData = new FormData(e.target);
   const patientData = {
+    id: `patient_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     visitDate: formData.get("visit-date"),
     patientType: formData.get("patient-type"),
     patientName: formData.get("patient-name"),
@@ -126,10 +78,12 @@ async function handleFormSubmit(e) {
     submitBtn.innerHTML = "<span>Adding Patient...</span>";
     submitBtn.disabled = true;
 
-    await addDoc(
-      collection(db, "doctors", currentUser.uid, "patients"),
-      patientData
+    // TODO: Integrate with Google Sheets API
+    const existingPatients = JSON.parse(
+      localStorage.getItem("patients") || "[]"
     );
+    existingPatients.push(patientData);
+    localStorage.setItem("patients", JSON.stringify(existingPatients));
 
     showSuccess("Patient added successfully!");
 
@@ -251,57 +205,6 @@ function clearAllProcedures() {
   proceduresList.innerHTML = "";
   procedureCounter = 0;
   updateTotalAmount();
-}
-
-function setupSidebarToggle() {
-  const sidebarToggle = document.getElementById("sidebar-toggle");
-  const sidebar = document.querySelector(".sidebar");
-  const mainContent = document.querySelector(".main-content");
-  const sidebarOverlay = document.getElementById("sidebar-overlay");
-
-  function isMobile() {
-    return window.innerWidth <= 768;
-  }
-
-  function toggleSidebar() {
-    if (isMobile()) {
-      toggleMobileSidebar();
-    } else {
-      toggleDesktopSidebar();
-    }
-  }
-
-  function toggleMobileSidebar() {
-    sidebar.classList.toggle("mobile-open");
-    sidebarOverlay.classList.toggle("show");
-  }
-
-  function closeMobileSidebar() {
-    sidebar.classList.remove("mobile-open");
-    sidebarOverlay.classList.remove("show");
-  }
-
-  function toggleDesktopSidebar() {
-    sidebar.classList.toggle("collapsed");
-    mainContent.classList.toggle("sidebar-collapsed");
-  }
-
-  if (sidebarToggle) {
-    sidebarToggle.addEventListener("click", toggleSidebar);
-  }
-
-  if (sidebarOverlay) {
-    sidebarOverlay.addEventListener("click", closeMobileSidebar);
-  }
-
-  function handleResize() {
-    if (!isMobile()) {
-      sidebar.classList.remove("mobile-open");
-      sidebarOverlay.classList.remove("show");
-    }
-  }
-
-  window.addEventListener("resize", handleResize);
 }
 
 function setupDatePicker() {
@@ -437,41 +340,4 @@ function setupDatePicker() {
       closeDropdown();
     }
   });
-}
-
-function showSuccess(message) {
-  const successDiv = document.createElement("div");
-  successDiv.className = "success-message";
-  successDiv.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-      <polyline points="22,4 12,14.01 9,11.01"></polyline>
-    </svg>
-    <span>${message}</span>
-  `;
-
-  document.body.appendChild(successDiv);
-
-  setTimeout(() => {
-    successDiv.remove();
-  }, 3000);
-}
-
-function showError(message) {
-  const errorDiv = document.createElement("div");
-  errorDiv.className = "error-message";
-  errorDiv.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="15" y1="9" x2="9" y2="15"></line>
-      <line x1="9" y1="9" x2="15" y2="15"></line>
-    </svg>
-    <span>${message}</span>
-  `;
-
-  document.body.appendChild(errorDiv);
-
-  setTimeout(() => {
-    errorDiv.remove();
-  }, 3000);
 }

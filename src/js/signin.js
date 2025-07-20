@@ -1,10 +1,4 @@
-import {
-  auth,
-  db,
-  signInWithEmailAndPassword,
-  getDoc,
-  doc,
-} from "./firebase-config.js";
+import { auth, signInWithEmailAndPassword } from "./firebase-config.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("signin-form");
@@ -29,18 +23,16 @@ document.addEventListener("DOMContentLoaded", function () {
         );
         const user = userCredential.user;
 
+        // Get doctor data from localStorage
+        const doctorData = localStorage.getItem("doctorData");
         let userData = null;
-        try {
-          const doctorDoc = await getDoc(doc(db, "doctors", user.uid));
-          if (doctorDoc.exists()) {
-            userData = doctorDoc.data().doctor; // Access the 'doctor' key
+
+        if (doctorData) {
+          try {
+            userData = JSON.parse(doctorData);
+          } catch (error) {
+            console.warn("Could not parse doctor data from localStorage");
           }
-        } catch (firestoreError) {
-          console.warn(
-            "Could not fetch doctor data from Firestore:",
-            firestoreError
-          );
-          // Continue with basic user data
         }
 
         localStorage.setItem(

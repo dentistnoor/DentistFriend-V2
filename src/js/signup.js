@@ -1,10 +1,4 @@
-import {
-  auth,
-  db,
-  createUserWithEmailAndPassword,
-  setDoc,
-  doc,
-} from "./firebase-config.js";
+import { auth, createUserWithEmailAndPassword } from "./firebase-config.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("signup-form");
@@ -33,19 +27,19 @@ document.addEventListener("DOMContentLoaded", function () {
         );
         const user = userCredential.user;
 
-        try {
-          await setDoc(doc(db, "doctors", user.uid), {
-            doctor: {
-              doctorName: doctorName,
-              email: email,
-              sheetsUrl: sheetsUrl,
-              uid: user.uid,
-            },
-          });
-        } catch (firestoreError) {
-          console.error("Firestore error:", firestoreError);
-          // Continue anyway - user is created, just Firestore failed
-        }
+        // Store doctor data in localStorage (placeholder for Google Sheets integration)
+        localStorage.setItem(
+          "doctorData",
+          JSON.stringify({
+            doctorName: doctorName,
+            email: email,
+            sheetsUrl: sheetsUrl,
+            uid: user.uid,
+          })
+        );
+
+        // TODO: Integrate with Google Sheets API
+        // await syncDoctorToGoogleSheets(doctorData);
 
         showSuccess("Account created successfully! Redirecting to sign in...");
 
