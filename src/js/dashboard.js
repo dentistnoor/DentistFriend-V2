@@ -1040,6 +1040,8 @@ function updateStats() {
     document.getElementById('total-collection').textContent = `SAR ${totalCollection.toFixed(2)}`;
 }
 
+
+
 function renderPatientTable() {
     const tbody = document.querySelector('#patients-table tbody');
     tbody.innerHTML = '';
@@ -1533,9 +1535,11 @@ function updateAnalyticsSummary() {
     const filteredLogs = getFilteredPatientLogs();
     
     const totalPatients = filteredLogs.length;
+    const cashPatients = filteredLogs.filter(log => log.patientType === 'cash').length;
+    const insurancePatients = filteredLogs.filter(log => log.patientType === 'insurance').length;
     
     // Handle both new and old data formats
-    const totalRevenue = filteredLogs.reduce((sum, log) => {
+    const totalCollection = filteredLogs.reduce((sum, log) => {
         if (log.procedures && Array.isArray(log.procedures)) {
             return sum + (log.totalAmount || log.procedures.reduce((procSum, proc) => procSum + (proc.finalAmount || 0), 0));
         } else {
@@ -1543,10 +1547,12 @@ function updateAnalyticsSummary() {
         }
     }, 0);
     
-    const avgAmount = totalPatients > 0 ? totalRevenue / totalPatients : 0;
+    const avgAmount = totalPatients > 0 ? totalCollection / totalPatients : 0;
     
     document.getElementById('analytics-total-patients').textContent = totalPatients;
-    document.getElementById('analytics-total-revenue').textContent = `SAR ${totalRevenue.toFixed(2)}`;
+    document.getElementById('analytics-cash-patients').textContent = cashPatients;
+    document.getElementById('analytics-insurance-patients').textContent = insurancePatients;
+    document.getElementById('analytics-total-collection').textContent = `SAR ${totalCollection.toFixed(2)}`;
     document.getElementById('analytics-avg-amount').textContent = `SAR ${avgAmount.toFixed(2)}`;
 }
 
