@@ -3,61 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DentistFriend - Record Manager</title>
+    <title>DentistFriend</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦷</text></svg>">
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #d9e0fe;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .logo {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        h1 {
-            color: #010826;
-            margin-bottom: 12px;
-        }
-        p {
-            color: #2f3828;
-            margin-bottom: 24px;
-        }
-        .btn {
-            background-color: #010826;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            text-decoration: none;
-            display: inline-block;
-            transition: background-color 0.3s ease;
-        }
-        .btn:hover {
-            background-color: #0a1030;
-        }
-    </style>
+    <link rel="stylesheet" href="src/css/sign.css">
 </head>
 <body>
     <div class="container">
-        <div class="logo">🦷</div>
-        <h1>DentistFriend</h1>
-        <p>Professional Dental Record Management System</p>
-        <a href="src/html/login.html" class="btn">Launch Application</a>
+        <div class="login-card">
+            <div class="logo-section">
+                <div class="logo">🦷</div>
+                <h1>DentistFriend</h1>
+                <p>Dental Record Management System</p>
+            </div>
+            <div class="button-group">
+                <a href="src/html/signin.html" class="sign-btn">Sign In</a>
+                <a href="src/html/signup.html" class="sign-btn secondary">Sign Up</a>
+            </div>
+        </div>
     </div>
 </body>
 </html>

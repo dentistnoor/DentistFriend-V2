@@ -20,7 +20,7 @@ Please note that **DentistFriend** is not intended to replace or infringe upon a
 ### Prerequisites
 
 - Python 3.x installed on your system
-- Modern web browser (Chrome, Firefox, Safari, Edge)
+- Web browser (Chrome, Firefox, Safari, Edge)
 
 ### Installation & Setup
 
@@ -44,29 +44,6 @@ Please note that **DentistFriend** is not intended to replace or infringe upon a
    ```
 
 4. Click "Launch Application" to start using DentistFriend!
-
-### Usage
-
-1. **Login**: Enter your doctor credentials to access the dashboard
-2. **Dashboard**: View practice statistics and key metrics
-3. **Add Patients**: Use the streamlined form to register new patients
-4. **Track Procedures**: Select from pre-loaded procedure lists with automatic pricing
-5. **Analytics**: Monitor practice performance with visual charts and reports
-6. **Settings**: Update your profile information as needed
-
-## Project Structure
-
-```text
-DentistFriend-V2/
-├── data/                    # Excel files for pricing
-│   ├── cash/               # Cash procedure pricing
-│   └── insurance/          # Insurance company pricing
-├── src/                    # Main application source
-│   ├── html/              # HTML pages
-│   ├── css/               # Stylesheets
-│   └── js/                # JavaScript logic
-└── index.html             # Entry point
-```
 
 ## License
 
