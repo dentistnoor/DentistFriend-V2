@@ -1798,6 +1798,18 @@ body {
         padding: 12px 16px;
         min-width: unset;
     }
+    
+    .insurance-select-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .delete-insurance-btn {
+        width: 100%;
+        height: auto;
+        padding: 12px 16px;
+        min-width: unset;
+    }
 }
 
 /* File Upload Styles */
@@ -1919,6 +1931,58 @@ body {
     background: white;
 }
 
+.insurance-select-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.insurance-select-group .insurance-selector {
+    flex: 1;
+}
+
+.delete-insurance-btn {
+    padding: 12px;
+    border: 2px solid #ef4444;
+    border-radius: 8px;
+    background: white;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+}
+
+.delete-insurance-btn:hover:not(:disabled) {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.delete-insurance-btn:disabled {
+    border-color: #d1d5db;
+    color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.delete-insurance-btn:disabled:hover {
+    background: white;
+    color: #9ca3af;
+    transform: none;
+}
+
+.insurance-delete-hint {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-style: italic;
+}
+
 .new-company-wrapper {
     margin-bottom: 16px;
     padding: 16px;
@@ -2032,6 +2096,16 @@ body {
     border-color: #10b981;
     background: #f0fdf4;
     border-style: solid;
+}
+
+.file-upload-area.file-selected {
+    border-color: #10b981;
+    background: #f0fdf4;
+    border-style: solid;
+}
+
+.file-upload-area.file-selected .upload-content svg {
+    color: #10b981;
 }
 
 .upload-content {

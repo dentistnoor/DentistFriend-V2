@@ -566,22 +566,30 @@
                             <h4>🏥 Upload Insurance Procedures</h4>
                             <div class="insurance-select-wrapper">
                                 <label for="insurance-select">Select Insurance Company:</label>
-                                <select id="insurance-select" class="insurance-selector">
-                                    <option value="">Choose insurance company...</option>
-                                    <option value="AL ETIHAD">AL ETIHAD</option>
-                                    <option value="AL RAJHI">AL RAJHI</option>
-                                    <option value="BUPA">BUPA</option>
-                                    <option value="GIG">GIG</option>
-                                    <option value="GLOBEMED">GLOBEMED</option>
-                                    <option value="GULF UNION">GULF UNION</option>
-                                    <option value="MALATH">MALATH</option>
-                                    <option value="MEDGULF-MEDIVISA">MEDGULF-MEDIVISA</option>
-                                    <option value="SAUDI ARABIAN INSURANCE COMPANY (SAICO)">SAUDI ARABIAN INSURANCE COMPANY (SAICO)</option>
-                                    <option value="SAUDI NEXTCARE">SAUDI NEXTCARE</option>
-                                    <option value="TAWUNIYA">TAWUNIYA</option>
-                                    <option value="TOTAL CARE SAUDI">TOTAL CARE SAUDI</option>
-                                    <option value="__ADD_NEW__">➕ Add New Insurance Company</option>
-                                </select>
+                                <div class="insurance-select-group">
+                                    <select id="insurance-select" class="insurance-selector">
+                                        <option value="">Choose insurance company...</option>
+                                        <option value="AL ETIHAD">AL ETIHAD</option>
+                                        <option value="AL RAJHI">AL RAJHI</option>
+                                        <option value="BUPA">BUPA</option>
+                                        <option value="GIG">GIG</option>
+                                        <option value="GLOBEMED">GLOBEMED</option>
+                                        <option value="GULF UNION">GULF UNION</option>
+                                        <option value="MALATH">MALATH</option>
+                                        <option value="MEDGULF-MEDIVISA">MEDGULF-MEDIVISA</option>
+                                        <option value="SAUDI ARABIAN INSURANCE COMPANY (SAICO)">SAUDI ARABIAN INSURANCE COMPANY (SAICO)</option>
+                                        <option value="SAUDI NEXTCARE">SAUDI NEXTCARE</option>
+                                        <option value="TAWUNIYA">TAWUNIYA</option>
+                                        <option value="TOTAL CARE SAUDI">TOTAL CARE SAUDI</option>
+                                        <option value="__ADD_NEW__">➕ Add New Insurance Company</option>
+                                    </select>
+                                    <button type="button" class="delete-insurance-btn" id="delete-insurance-btn" title="Delete selected insurance company" disabled>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <small class="insurance-delete-hint">💡 All insurance companies can be deleted. This will remove all uploaded procedures for the selected company.</small>
                             </div>
                             
                             <!-- New Company Input (Hidden by default) -->
