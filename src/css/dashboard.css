@@ -397,6 +397,23 @@
   gap: 12px;
 }
 
+.procedure-fields .form-group:nth-child(3),
+.procedure-fields .form-group:nth-child(4) {
+  grid-column: span 1;
+}
+
+.procedure-fields input[readonly] {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  border-color: #dee2e6;
+}
+
+.procedure-fields input[readonly]:focus {
+  box-shadow: none;
+  border-color: #dee2e6;
+}
+
 .total-amount-row {
   background: #f0f8ff;
   border: 2px solid #3b82f6;

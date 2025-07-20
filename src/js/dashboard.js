@@ -7,11 +7,14 @@ import {
 } from "./common.js";
 
 let procedureCounter = 0;
+let cashProcedures = [];
+let insuranceProcedures = {};
 
 document.addEventListener("DOMContentLoaded", function () {
   checkAuth().then(() => {
     setupSidebar();
     setupEventListeners();
+    loadStoredProcedures();
   });
 });
 
@@ -31,7 +34,30 @@ function setupEventListeners() {
     addProcedureBtn.addEventListener("click", addProcedureItem);
   }
 
+  const insuranceCompanySelect = document.getElementById("insurance-company");
+  if (insuranceCompanySelect) {
+    insuranceCompanySelect.addEventListener(
+      "change",
+      handleInsuranceCompanyChange
+    );
+  }
+
   setupDatePicker();
+}
+
+function loadStoredProcedures() {
+  const storedCash = localStorage.getItem("cashProcedures");
+  const storedInsurance = localStorage.getItem("insuranceProcedures");
+
+  if (storedCash) {
+    cashProcedures = JSON.parse(storedCash);
+    console.log("Loaded cash procedures:", cashProcedures);
+  }
+
+  if (storedInsurance) {
+    insuranceProcedures = JSON.parse(storedInsurance);
+    console.log("Loaded insurance procedures:", insuranceProcedures);
+  }
 }
 
 async function handleFormSubmit(e) {
@@ -108,10 +134,92 @@ function handlePatientTypeChange(e) {
   const insuranceRow = document.getElementById("insurance-company-row");
   if (e.target.value === "insurance") {
     insuranceRow.style.display = "block";
+    populateInsuranceCompanies();
   } else {
     insuranceRow.style.display = "none";
     document.getElementById("insurance-company").value = "";
   }
+
+  // Clear all existing procedure data and update dropdowns
+  const procedureItems = document.querySelectorAll(".procedure-item");
+  procedureItems.forEach((item) => {
+    const procedureId = item.id.split("-")[1];
+    clearProcedureFields(procedureId);
+    populateProcedureDropdown(procedureId);
+  });
+
+  // Update field editability based on patient type
+  updateFieldEditability(e.target.value);
+}
+
+function populateInsuranceCompanies() {
+  const select = document.getElementById("insurance-company");
+  const companies = Object.keys(insuranceProcedures);
+
+  select.innerHTML = '<option value="">Select insurance company</option>';
+  companies.forEach((company) => {
+    const option = document.createElement("option");
+    option.value = company;
+    option.textContent = company;
+    select.appendChild(option);
+  });
+}
+
+function handleInsuranceCompanyChange() {
+  // Clear all existing procedure data and update dropdowns
+  const procedureItems = document.querySelectorAll(".procedure-item");
+  procedureItems.forEach((item) => {
+    const procedureId = item.id.split("-")[1];
+    clearProcedureFields(procedureId);
+    populateProcedureDropdown(procedureId);
+  });
+
+  // Update field editability based on current patient type
+  const patientType = document.getElementById("patient-type").value;
+  updateFieldEditability(patientType);
+}
+
+function clearProcedureFields(procedureId) {
+  const priceInput = document.getElementById(`procedure-price-${procedureId}`);
+  const discountInput = document.getElementById(
+    `procedure-discount-${procedureId}`
+  );
+  const finalInput = document.getElementById(`procedure-final-${procedureId}`);
+  const nameSelect = document.getElementById(`procedure-name-${procedureId}`);
+
+  if (priceInput) priceInput.value = "";
+  if (discountInput) discountInput.value = "";
+  if (finalInput) finalInput.value = "";
+  if (nameSelect) nameSelect.value = "";
+}
+
+function updateFieldEditability(patientType) {
+  const procedureItems = document.querySelectorAll(".procedure-item");
+
+  procedureItems.forEach((item) => {
+    const procedureId = item.id.split("-")[1];
+    const priceInput = document.getElementById(
+      `procedure-price-${procedureId}`
+    );
+    const discountInput = document.getElementById(
+      `procedure-discount-${procedureId}`
+    );
+    const finalInput = document.getElementById(
+      `procedure-final-${procedureId}`
+    );
+
+    if (patientType === "insurance") {
+      // Make fields read-only for insurance
+      if (priceInput) priceInput.readOnly = true;
+      if (discountInput) discountInput.readOnly = true;
+      if (finalInput) finalInput.readOnly = true;
+    } else {
+      // Make fields editable for cash
+      if (priceInput) priceInput.readOnly = false;
+      if (discountInput) discountInput.readOnly = false;
+      if (finalInput) finalInput.readOnly = false;
+    }
+  });
 }
 
 function addProcedureItem() {
@@ -136,21 +244,31 @@ function addProcedureItem() {
     <div class="procedure-fields">
       <div class="form-group">
         <label for="procedure-name-${procedureCounter}">Procedure Name</label>
-        <input type="text" id="procedure-name-${procedureCounter}" name="procedure-name-${procedureCounter}" placeholder="Enter procedure name" required>
+        <select id="procedure-name-${procedureCounter}" name="procedure-name-${procedureCounter}" onchange="onProcedureSelect(${procedureCounter})" required>
+          <option value="">Select procedure</option>
+        </select>
       </div>
       <div class="form-group">
         <label for="procedure-price-${procedureCounter}">Price (SAR)</label>
         <input type="number" id="procedure-price-${procedureCounter}" name="procedure-price-${procedureCounter}" placeholder="0.00" step="0.01" min="0" required>
       </div>
+      <div class="form-group">
+        <label for="procedure-discount-${procedureCounter}">Discount (%)</label>
+        <input type="number" id="procedure-discount-${procedureCounter}" name="procedure-discount-${procedureCounter}" placeholder="0" step="0.01" min="0" max="100" onchange="onDiscountChange(${procedureCounter})">
+      </div>
+      <div class="form-group">
+        <label for="procedure-final-${procedureCounter}">Final Amount (SAR)</label>
+        <input type="number" id="procedure-final-${procedureCounter}" name="procedure-final-${procedureCounter}" placeholder="0.00" step="0.01" min="0" readonly>
+      </div>
     </div>
   `;
 
   proceduresList.appendChild(procedureItem);
+  populateProcedureDropdown(procedureCounter);
 
-  const priceInput = document.getElementById(
-    `procedure-price-${procedureCounter}`
-  );
-  priceInput.addEventListener("input", () => updateTotalAmount());
+  // Set field editability based on current patient type
+  const patientType = document.getElementById("patient-type").value;
+  updateFieldEditability(patientType);
 }
 
 window.removeProcedureItem = function (procedureId) {
@@ -160,6 +278,9 @@ window.removeProcedureItem = function (procedureId) {
     updateTotalAmount();
   }
 };
+
+window.onProcedureSelect = onProcedureSelect;
+window.onDiscountChange = onDiscountChange;
 
 function getProceduresData() {
   const procedures = [];
@@ -172,16 +293,130 @@ function getProceduresData() {
       parseFloat(
         document.getElementById(`procedure-price-${procedureId}`).value
       ) || 0;
+    const discount =
+      parseFloat(
+        document.getElementById(`procedure-discount-${procedureId}`).value
+      ) || 0;
+    const finalAmount =
+      parseFloat(
+        document.getElementById(`procedure-final-${procedureId}`).value
+      ) || 0;
 
-    if (name && price > 0) {
+    if (name && finalAmount > 0) {
       procedures.push({
         name: name,
         price: price,
+        discount: discount,
+        finalAmount: finalAmount,
       });
     }
   });
 
   return procedures;
+}
+
+function populateProcedureDropdown(procedureId) {
+  const select = document.getElementById(`procedure-name-${procedureId}`);
+  const patientType = document.getElementById("patient-type").value;
+
+  console.log(
+    "Populating dropdown for procedure",
+    procedureId,
+    "with patient type:",
+    patientType
+  );
+  console.log("Cash procedures available:", cashProcedures);
+
+  select.innerHTML = '<option value="">Select procedure</option>';
+
+  if (patientType === "cash") {
+    cashProcedures.forEach((proc) => {
+      const option = document.createElement("option");
+      option.value = proc.description;
+      option.textContent = proc.description;
+      option.dataset.price = proc.price;
+      option.dataset.net = proc.net;
+      select.appendChild(option);
+    });
+    console.log("Added", cashProcedures.length, "cash procedures to dropdown");
+  } else if (patientType === "insurance") {
+    const insuranceCompany = document.getElementById("insurance-company").value;
+    const procedures = insuranceProcedures[insuranceCompany] || [];
+
+    procedures.forEach((proc) => {
+      const option = document.createElement("option");
+      option.value = proc.description;
+      option.textContent = proc.description;
+      option.dataset.price = proc.price;
+      option.dataset.net = proc.net;
+      option.dataset.discount = proc.discount;
+      select.appendChild(option);
+    });
+  }
+}
+
+function onProcedureSelect(procedureId) {
+  const select = document.getElementById(`procedure-name-${procedureId}`);
+  const selectedOption = select.options[select.selectedIndex];
+
+  console.log(
+    "Procedure selected:",
+    selectedOption ? selectedOption.value : "none"
+  );
+  console.log(
+    "Selected option data:",
+    selectedOption ? selectedOption.dataset : "none"
+  );
+
+  if (selectedOption && selectedOption.dataset.price) {
+    const priceInput = document.getElementById(
+      `procedure-price-${procedureId}`
+    );
+    const discountInput = document.getElementById(
+      `procedure-discount-${procedureId}`
+    );
+    const finalInput = document.getElementById(
+      `procedure-final-${procedureId}`
+    );
+
+    priceInput.value = selectedOption.dataset.price;
+    discountInput.value = selectedOption.dataset.discount || 0;
+
+    const price = parseFloat(selectedOption.dataset.price) || 0;
+    const discount = parseFloat(selectedOption.dataset.discount) || 0;
+    const final = price - (price * discount) / 100;
+
+    finalInput.value = final.toFixed(2);
+    updateTotalAmount();
+
+    // Update field editability after filling data
+    const patientType = document.getElementById("patient-type").value;
+    updateFieldEditability(patientType);
+
+    console.log(
+      "Filled fields - Price:",
+      priceInput.value,
+      "Discount:",
+      discountInput.value,
+      "Final:",
+      finalInput.value
+    );
+  }
+}
+
+function onDiscountChange(procedureId) {
+  const priceInput = document.getElementById(`procedure-price-${procedureId}`);
+  const discountInput = document.getElementById(
+    `procedure-discount-${procedureId}`
+  );
+  const finalInput = document.getElementById(`procedure-final-${procedureId}`);
+
+  const price = parseFloat(priceInput.value) || 0;
+  const discount = parseFloat(discountInput.value) || 0;
+  const final = price - (price * discount) / 100;
+
+  finalInput.value = final.toFixed(2);
+  updateTotalAmount();
 }
 
 function updateTotalAmount() {
@@ -190,11 +425,11 @@ function updateTotalAmount() {
 
   procedureItems.forEach((item) => {
     const procedureId = item.id.split("-")[1];
-    const price =
+    const finalAmount =
       parseFloat(
-        document.getElementById(`procedure-price-${procedureId}`).value
+        document.getElementById(`procedure-final-${procedureId}`).value
       ) || 0;
-    total += price;
+    total += finalAmount;
   });
 
   document.getElementById("total-amount").value = total.toFixed(2);
