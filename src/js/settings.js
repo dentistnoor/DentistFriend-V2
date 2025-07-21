@@ -88,9 +88,10 @@ async function handleProfileUpdate(e) {
     return;
   }
 
+  const submitBtn = e.target.querySelector(".btn-primary");
+  const originalText = submitBtn.innerHTML;
+
   try {
-    const submitBtn = e.target.querySelector(".btn-primary");
-    const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = "<span>Updating...</span>";
     submitBtn.disabled = true;
 
@@ -112,8 +113,6 @@ async function handleProfileUpdate(e) {
     submitBtn.disabled = false;
   } catch (error) {
     showError("Failed to update profile. Please try again.");
-
-    const submitBtn = e.target.querySelector(".btn-primary");
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
   }
@@ -247,7 +246,6 @@ async function parseExcelFile(file, type, statusElement) {
       `${type === "cash" ? "Cash" : "Insurance"} procedures updated!`
     );
   } catch (error) {
-    console.error("Error parsing file:", error);
     updateStatus(
       statusElement,
       "Error processing file. Please check the format.",
@@ -303,7 +301,6 @@ function parseCashProcedures(data) {
   const headers = data[headerRowIndex].map((h) =>
     h ? h.toString().trim() : ""
   );
-  console.log("Found cash headers at row", headerRowIndex, ":", headers);
 
   const descriptionIndex = headers.findIndex((h) =>
     h.toLowerCase().includes("description")
@@ -312,15 +309,6 @@ function parseCashProcedures(data) {
     h.toLowerCase().includes("price")
   );
   const netIndex = headers.findIndex((h) => h.toLowerCase().includes("net"));
-
-  console.log(
-    "Cash column indices - Description:",
-    descriptionIndex,
-    "Price:",
-    priceIndex,
-    "Net:",
-    netIndex
-  );
 
   if (descriptionIndex === -1 || priceIndex === -1 || netIndex === -1) {
     throw new Error(
@@ -343,7 +331,6 @@ function parseCashProcedures(data) {
     }
   }
 
-  console.log("Parsed cash procedures:", cashProcedures.length, "procedures");
   localStorage.setItem("cashProcedures", JSON.stringify(cashProcedures));
   displayUploadedFiles();
 }
@@ -372,7 +359,6 @@ function parseInsuranceProcedures(data, fileName) {
   const headers = data[headerRowIndex].map((h) =>
     h ? h.toString().trim() : ""
   );
-  console.log("Found headers at row", headerRowIndex, ":", headers);
 
   const descriptionIndex = headers.findIndex((h) =>
     h.toLowerCase().includes("description")
@@ -383,17 +369,6 @@ function parseInsuranceProcedures(data, fileName) {
   const netIndex = headers.findIndex((h) => h.toLowerCase().includes("net"));
   const discountIndex = headers.findIndex((h) =>
     h.toLowerCase().includes("discount")
-  );
-
-  console.log(
-    "Column indices - Description:",
-    descriptionIndex,
-    "Price:",
-    priceIndex,
-    "Net:",
-    netIndex,
-    "Discount:",
-    discountIndex
   );
 
   if (
@@ -424,13 +399,6 @@ function parseInsuranceProcedures(data, fileName) {
     }
   }
 
-  console.log(
-    "Parsed procedures for",
-    companyName,
-    ":",
-    procedures.length,
-    "procedures"
-  );
   insuranceProcedures[companyName] = procedures;
   localStorage.setItem(
     "insuranceProcedures",

@@ -4,16 +4,21 @@ import {
   showSuccess,
   showError,
   formatDateToDDMMYYYY,
+  setupDatePicker,
 } from "./common.js";
 
 let allPatients = [];
 let filteredPatients = [];
+let cashProcedures = [];
+let insuranceProcedures = {};
 
 document.addEventListener("DOMContentLoaded", function () {
   checkAuth().then(() => {
     setupSidebar();
     setupEventListeners();
+    setupPatientsDatePickers();
     loadPatients();
+    loadStoredProcedures();
   });
 });
 
@@ -55,8 +60,6 @@ function setupModalEventListeners() {
 
 function setupDateFilters() {
   const presetButtons = document.querySelectorAll(".patients-preset-btn");
-  const fromDateInput = document.getElementById("patients-from-date");
-  const toDateInput = document.getElementById("patients-to-date");
 
   presetButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -69,20 +72,54 @@ function setupDateFilters() {
     });
   });
 
-  fromDateInput.addEventListener("change", filterPatients);
-  toDateInput.addEventListener("change", filterPatients);
-
   document
     .getElementById("clearDateFilters")
     .addEventListener("click", function () {
+      const fromDateInput = document.getElementById("patients-from-date");
+      const toDateInput = document.getElementById("patients-to-date");
+
       fromDateInput.value = "";
       toDateInput.value = "";
+
+      // Update display text
+      document.getElementById("patients-from-date-display").textContent =
+        "dd/mm/yyyy";
+      document.getElementById("patients-to-date-display").textContent =
+        "dd/mm/yyyy";
 
       presetButtons.forEach((btn) => btn.classList.remove("active"));
       document.querySelector('[data-range="all"]').classList.add("active");
 
       filterPatients();
     });
+}
+
+function setupPatientsDatePickers() {
+  // Setup "From" date picker
+  setupDatePicker({
+    triggerId: "patients-from-date-trigger",
+    dropdownId: "patients-from-calendar",
+    displayId: "patients-from-date-display",
+    inputId: "patients-from-date",
+    prevMonthId: "patients-from-prev-month",
+    nextMonthId: "patients-from-next-month",
+    titleId: "patients-from-calendar-title",
+    daysId: "patients-from-calendar-days",
+    onDateSelect: filterPatients,
+  });
+
+  // Setup "To" date picker
+  setupDatePicker({
+    triggerId: "patients-to-date-trigger",
+    dropdownId: "patients-to-calendar",
+    displayId: "patients-to-date-display",
+    inputId: "patients-to-date",
+    prevMonthId: "patients-to-prev-month",
+    nextMonthId: "patients-to-next-month",
+    titleId: "patients-to-calendar-title",
+    daysId: "patients-to-calendar-days",
+    onDateSelect: filterPatients,
+  });
 }
 
 function setDateRange(range) {
@@ -152,6 +189,12 @@ function loadPatients() {
   renderPatientsTable();
 }
 
+function parseLocalDate(dateStr) {
+  // dateStr: 'YYYY-MM-DD'
+  const [year, month, day] = dateStr.split("-");
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
 function filterPatients() {
   const searchTerm = document
     .getElementById("search-patients")
@@ -181,14 +224,14 @@ function filterPatients() {
     // Date filter
     let dateMatch = true;
     if (fromDate || toDate) {
-      const visitDate = new Date(patient.visitDate);
+      const visitDate = parseLocalDate(patient.visitDate);
       if (fromDate) {
-        const from = new Date(fromDate);
+        const from = parseLocalDate(fromDate);
         dateMatch = dateMatch && visitDate >= from;
       }
       if (toDate) {
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59); // End of day
+        const to = parseLocalDate(toDate);
+        to.setHours(23, 59, 59, 999); // End of day
         dateMatch = dateMatch && visitDate <= to;
       }
     }
@@ -381,6 +424,25 @@ function addEditProcedureItem(existingProcedure = null) {
   procedureItem.className = "procedure-item";
   procedureItem.dataset.procedureId = editProcedureCounter;
 
+  // Determine patient type and insurance company
+  const patientType = document.getElementById("edit-patient-type").value;
+  const insuranceCompany = document.getElementById(
+    "edit-insurance-company"
+  ).value;
+
+  // Prepare options
+  let optionsHtml = '<option value="">Select procedure</option>';
+  if (patientType === "cash") {
+    cashProcedures.forEach((proc) => {
+      optionsHtml += `<option value="${proc.description}" data-price="${proc.price}">${proc.description}</option>`;
+    });
+  } else if (patientType === "insurance") {
+    const procedures = insuranceProcedures[insuranceCompany] || [];
+    procedures.forEach((proc) => {
+      optionsHtml += `<option value="${proc.description}" data-price="${proc.price}">${proc.description}</option>`;
+    });
+  }
+
   const procedureName = existingProcedure
     ? existingProcedure.name || existingProcedure.procedure || ""
     : "";
@@ -402,10 +464,10 @@ function addEditProcedureItem(existingProcedure = null) {
     </div>
     <div class="procedure-fields">
       <div class="form-group">
-        <input type="text" name="edit-procedure-name-${editProcedureCounter}" placeholder="Procedure name" value="${procedureName}" oninput="updateEditTotalAmount()" />
+        <select name="edit-procedure-name-${editProcedureCounter}" onchange="onEditProcedureSelect(this, ${editProcedureCounter})" required>${optionsHtml}</select>
       </div>
       <div class="form-group">
-        <input type="number" name="edit-procedure-price-${editProcedureCounter}" placeholder="Price (SAR)" step="0.01" min="0" value="${procedurePrice}" oninput="updateEditTotalAmount()" />
+        <input type="number" name="edit-procedure-price-${editProcedureCounter}" placeholder="Price (SAR)" step="0.01" min="0" value="${procedurePrice}" oninput="updateEditTotalAmount()" required />
       </div>
     </div>
   `;
@@ -413,6 +475,12 @@ function addEditProcedureItem(existingProcedure = null) {
   proceduresList.appendChild(procedureItem);
   editProcedureCounter++;
   updateEditTotalAmount();
+
+  // Set selected value if editing
+  if (procedureName) {
+    const select = procedureItem.querySelector("select");
+    select.value = procedureName;
+  }
 }
 
 function removeEditProcedureItem(procedureId) {
@@ -502,12 +570,12 @@ function getEditProceduresData() {
   );
 
   procedureItems.forEach((item) => {
-    const nameInput = item.querySelector('input[type="text"]');
+    const select = item.querySelector("select");
     const priceInput = item.querySelector('input[type="number"]');
 
-    if (nameInput && nameInput.value.trim()) {
+    if (select && select.value) {
       procedures.push({
-        name: nameInput.value.trim(),
+        name: select.value,
         price: parseFloat(priceInput.value) || 0,
         finalAmount: parseFloat(priceInput.value) || 0,
       });
@@ -515,4 +583,65 @@ function getEditProceduresData() {
   });
 
   return procedures;
+}
+
+function loadStoredProcedures() {
+  const storedCash = localStorage.getItem("cashProcedures");
+  const storedInsurance = localStorage.getItem("insuranceProcedures");
+  if (storedCash) cashProcedures = JSON.parse(storedCash);
+  if (storedInsurance) insuranceProcedures = JSON.parse(storedInsurance);
+}
+
+// Handler for dropdown change
+window.onEditProcedureSelect = function (select, procedureId) {
+  const selectedOption = select.options[select.selectedIndex];
+  const priceInput = select
+    .closest(".procedure-fields")
+    .querySelector('input[type="number"]');
+  if (selectedOption && selectedOption.dataset.price) {
+    priceInput.value = selectedOption.dataset.price;
+  } else {
+    priceInput.value = "";
+  }
+  updateEditTotalAmount();
+};
+
+// When patient type or insurance company changes, re-render procedures
+const editPatientType = document.getElementById("edit-patient-type");
+if (editPatientType) {
+  editPatientType.addEventListener("change", function () {
+    // Re-render procedures
+    const proceduresList = document.getElementById("edit-procedures-list");
+    const currentProcedures = [];
+    proceduresList.querySelectorAll(".procedure-item").forEach((item) => {
+      const select = item.querySelector("select");
+      const priceInput = item.querySelector('input[type="number"]');
+      currentProcedures.push({
+        name: select ? select.value : "",
+        price: priceInput ? priceInput.value : 0,
+      });
+    });
+    proceduresList.innerHTML = "";
+    editProcedureCounter = 0;
+    currentProcedures.forEach((proc) => addEditProcedureItem(proc));
+  });
+}
+const editInsuranceCompany = document.getElementById("edit-insurance-company");
+if (editInsuranceCompany) {
+  editInsuranceCompany.addEventListener("change", function () {
+    // Re-render procedures
+    const proceduresList = document.getElementById("edit-procedures-list");
+    const currentProcedures = [];
+    proceduresList.querySelectorAll(".procedure-item").forEach((item) => {
+      const select = item.querySelector("select");
+      const priceInput = item.querySelector('input[type="number"]');
+      currentProcedures.push({
+        name: select ? select.value : "",
+        price: priceInput ? priceInput.value : 0,
+      });
+    });
+    proceduresList.innerHTML = "";
+    editProcedureCounter = 0;
+    currentProcedures.forEach((proc) => addEditProcedureItem(proc));
+  });
 }

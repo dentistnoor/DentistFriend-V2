@@ -141,15 +141,15 @@
 }
 
 .date-picker-trigger:hover {
-  border-color: #010826;
-  background: white;
+  border-color: #d9e0fe;
+  background: #f9fafb;
 }
 
 .date-picker-trigger:focus {
   outline: none;
-  border-color: #010826;
-  box-shadow: 0 0 0 3px rgba(1, 8, 38, 0.1);
-  background: white;
+  border-color: #d9e0fe;
+  box-shadow: none;
+  background: #f9fafb;
 }
 
 .date-picker-trigger .chevron {
@@ -273,7 +273,7 @@
 }
 
 .calendar-day.selected {
-  background: #010826;
+  background: #3b82f6;
   color: white;
 }
 
@@ -284,13 +284,12 @@
 }
 
 .calendar-day.today.selected {
-  background: #010826;
+  background: #3b82f6;
   color: white;
 }
 
 .calendar-day:focus {
-  outline: 2px solid #010826;
-  outline-offset: 2px;
+  outline: none;
 }
 
 @keyframes fadeIn {
@@ -436,7 +435,7 @@
 
 .submit-btn {
   width: 100%;
-  background: #010826;
+  background: #10b981;
   color: white;
   border: none;
   padding: 14px 20px;
@@ -453,9 +452,9 @@
 }
 
 .submit-btn:hover {
-  background: rgba(1, 8, 38, 0.9);
+  background: rgba(16, 185, 129, 0.9);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(1, 8, 38, 0.2);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .success-message,
@@ -521,87 +520,107 @@
 
 .patients-date-controls {
   display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: flex-end;
-  flex-wrap: wrap;
 }
 
 .patients-date-inputs {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+  align-items: end;
 }
 
 .date-input-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .date-input-group label {
-  font-weight: 600;
-  color: #010826;
   font-size: 14px;
+  font-weight: 500;
+  color: #374151;
 }
 
 .patients-date-input {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 16px;
   border: 2px solid #d9e0fe;
   border-radius: 8px;
-  font-size: 14px;
   background: #f9fafb;
-  color: #2f3828;
+  cursor: pointer;
   transition: all 0.2s;
-  min-width: 150px;
+  font-size: 14px;
+  color: #2f3828;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.patients-date-input:hover {
+  border-color: #010826;
+  background: white;
 }
 
 .patients-date-input:focus {
   outline: none;
-  border-color: #010826;
-  box-shadow: 0 0 0 3px rgba(1, 8, 38, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   background: white;
 }
 
 .patients-date-presets {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .patients-preset-btn {
-  padding: 10px 16px;
-  border: 2px solid #d9e0fe;
-  border-radius: 8px;
-  background: #f9fafb;
-  color: #2f3828;
-  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  text-align: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .patients-preset-btn:hover {
-  border-color: #010826;
-  color: #010826;
-  background: white;
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .patients-preset-btn.active {
-  background: #010826;
-  border-color: #010826;
+  background-color: #3b82f6;
   color: white;
+  border-color: #3b82f6;
 }
 
 .patients-preset-btn.clear-btn {
-  background-color: #ffebee;
-  border-color: #f44336;
-  color: #d32f2f;
-  min-width: 70px;
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
 }
 
 .patients-preset-btn.clear-btn:hover {
-  background-color: #f44336;
-  color: white;
+  background-color: #dc2626;
+  border-color: #dc2626;
 }
 
 /* Search Section */
@@ -636,19 +655,18 @@
 
 .search-bar input {
   width: 100%;
-  padding: 12px 16px 12px 48px;
-  border: 2px solid #d9e0fe;
+  padding: 10px 12px 10px 48px;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
-  transition: all 0.2s;
-  background: #f9fafb;
+  transition: border-color 0.2s ease;
+  background-color: white;
 }
 
 .search-bar input:focus {
   outline: none;
-  border-color: #010826;
-  box-shadow: 0 0 0 3px rgba(1, 8, 38, 0.1);
-  background: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .filter-buttons {
@@ -657,27 +675,35 @@
 }
 
 .filter-btn {
-  padding: 8px 16px;
-  border: 2px solid #d9e0fe;
-  border-radius: 8px;
-  background: #f9fafb;
-  color: #2f3828;
-  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  color: #374151;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .filter-btn:hover {
-  border-color: #010826;
-  color: #010826;
-  background: white;
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .filter-btn.active {
-  background: #010826;
-  border-color: #010826;
+  background-color: #3b82f6;
   color: white;
+  border-color: #3b82f6;
 }
 
 /* Table */
@@ -991,9 +1017,9 @@
 }
 
 .btn-primary {
-  background: #010826;
+  background: #10b981;
   color: white;
-  border: 2px solid #010826;
+  border: 2px solid #10b981;
   padding: 12px 24px;
   border-radius: 8px;
   font-size: 14px;
@@ -1008,8 +1034,8 @@
 }
 
 .btn-primary:hover {
-  background: #1a1f3a;
-  border-color: #1a1f3a;
+  background: #059669;
+  border-color: #059669;
 }
 
 .btn-primary svg {
@@ -1115,8 +1141,8 @@
   }
 
   .patients-date-presets {
-    justify-content: center;
-    flex-wrap: wrap;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
 
   .patients-preset-btn {
@@ -1245,6 +1271,16 @@
 
   .patients-date-range h3 {
     font-size: 16px;
+  }
+
+  .patients-date-presets {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .patients-preset-btn {
+    font-size: 11px;
+    padding: 6px 8px;
   }
 
   .patients-table {

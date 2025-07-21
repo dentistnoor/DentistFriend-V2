@@ -64,17 +64,19 @@ body {
 }
 
 .title-section h1 {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   color: #010826;
   line-height: 1.2;
+  margin: 0;
 }
 
 .title-section .subtitle {
-  font-size: 11px;
+  font-size: 12px;
   color: #2f3828;
   opacity: 0.8;
   font-weight: 500;
+  margin: 0;
 }
 
 .user-section {
@@ -87,19 +89,21 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 2px;
 }
 
 .greeting {
   font-weight: 600;
   color: #010826;
   font-size: 14px;
+  margin: 0;
 }
 
 .user-email {
   font-size: 12px;
   color: #2f3828;
+  margin: 0;
   opacity: 0.8;
-  margin-top: 2px;
 }
 
 .logout-btn {

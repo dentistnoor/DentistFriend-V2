@@ -4,6 +4,7 @@ import {
   showSuccess,
   showError,
   getCurrentUser,
+  formatDateToYYYYMMDDLocal,
 } from "./common.js";
 
 let procedureCounter = 0;
@@ -51,12 +52,10 @@ function loadStoredProcedures() {
 
   if (storedCash) {
     cashProcedures = JSON.parse(storedCash);
-    console.log("Loaded cash procedures:", cashProcedures);
   }
 
   if (storedInsurance) {
     insuranceProcedures = JSON.parse(storedInsurance);
-    console.log("Loaded insurance procedures:", insuranceProcedures);
   }
 }
 
@@ -319,14 +318,6 @@ function populateProcedureDropdown(procedureId) {
   const select = document.getElementById(`procedure-name-${procedureId}`);
   const patientType = document.getElementById("patient-type").value;
 
-  console.log(
-    "Populating dropdown for procedure",
-    procedureId,
-    "with patient type:",
-    patientType
-  );
-  console.log("Cash procedures available:", cashProcedures);
-
   select.innerHTML = '<option value="">Select procedure</option>';
 
   if (patientType === "cash") {
@@ -338,7 +329,6 @@ function populateProcedureDropdown(procedureId) {
       option.dataset.net = proc.net;
       select.appendChild(option);
     });
-    console.log("Added", cashProcedures.length, "cash procedures to dropdown");
   } else if (patientType === "insurance") {
     const insuranceCompany = document.getElementById("insurance-company").value;
     const procedures = insuranceProcedures[insuranceCompany] || [];
@@ -358,15 +348,6 @@ function populateProcedureDropdown(procedureId) {
 function onProcedureSelect(procedureId) {
   const select = document.getElementById(`procedure-name-${procedureId}`);
   const selectedOption = select.options[select.selectedIndex];
-
-  console.log(
-    "Procedure selected:",
-    selectedOption ? selectedOption.value : "none"
-  );
-  console.log(
-    "Selected option data:",
-    selectedOption ? selectedOption.dataset : "none"
-  );
 
   if (selectedOption && selectedOption.dataset.price) {
     const priceInput = document.getElementById(
@@ -392,15 +373,6 @@ function onProcedureSelect(procedureId) {
     // Update field editability after filling data
     const patientType = document.getElementById("patient-type").value;
     updateFieldEditability(patientType);
-
-    console.log(
-      "Filled fields - Price:",
-      priceInput.value,
-      "Discount:",
-      discountInput.value,
-      "Final:",
-      finalInput.value
-    );
   }
 }
 
@@ -486,7 +458,7 @@ function setupDatePicker() {
     calendarTitle.textContent = new Date(
       currentYear,
       currentMonth
-    ).toLocaleDateString("en-US", {
+    ).toLocaleDateString("en-GB", {
       month: "long",
       year: "numeric",
     });
@@ -530,15 +502,13 @@ function setupDatePicker() {
   }
 
   function updateSelectedDate(date) {
-    const formattedDate = date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
 
     selectedDateDisplay.textContent = formattedDate;
-    visitDateInput.value = date.toISOString().split("T")[0];
+    visitDateInput.value = formatDateToYYYYMMDDLocal(date);
   }
 
   if (datePickerTrigger) {

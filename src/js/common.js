@@ -145,6 +145,11 @@ export function showError(message) {
   }, 3000);
 }
 
+// Get current user
+export function getCurrentUser() {
+  return currentUser;
+}
+
 // Common date formatting
 export function formatDateToDDMMYYYY(dateString) {
   const date = new Date(dateString);
@@ -154,7 +159,164 @@ export function formatDateToDDMMYYYY(dateString) {
   return `${day}/${month}/${year}`;
 }
 
-// Get current user
-export function getCurrentUser() {
-  return currentUser;
+// Reusable date picker setup function
+export function setupDatePicker(config) {
+  const {
+    triggerId,
+    dropdownId,
+    displayId,
+    inputId,
+    prevMonthId,
+    nextMonthId,
+    titleId,
+    daysId,
+    onDateSelect,
+  } = config;
+
+  const datePickerTrigger = document.getElementById(triggerId);
+  const calendarDropdown = document.getElementById(dropdownId);
+  const selectedDateDisplay = document.getElementById(displayId);
+  const dateInput = document.getElementById(inputId);
+  const prevMonthBtn = document.getElementById(prevMonthId);
+  const nextMonthBtn = document.getElementById(nextMonthId);
+  const calendarTitle = document.getElementById(titleId);
+  const calendarDays = document.getElementById(daysId);
+
+  if (!datePickerTrigger || !calendarDropdown) {
+    return; // Exit if elements don't exist
+  }
+
+  let currentDate = new Date();
+  let selectedDate = null;
+  let currentMonth = currentDate.getMonth();
+  let currentYear = currentDate.getFullYear();
+
+  function toggleDropdown() {
+    const isOpen = calendarDropdown.classList.contains("show");
+    if (isOpen) {
+      closeDropdown();
+    } else {
+      openDropdown();
+    }
+  }
+
+  function openDropdown() {
+    calendarDropdown.classList.add("show");
+    datePickerTrigger.setAttribute("aria-expanded", "true");
+    renderCalendar();
+  }
+
+  function closeDropdown() {
+    calendarDropdown.classList.remove("show");
+    datePickerTrigger.setAttribute("aria-expanded", "false");
+  }
+
+  function renderCalendar() {
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+    calendarTitle.textContent = new Date(
+      currentYear,
+      currentMonth
+    ).toLocaleDateString("en-GB", {
+      month: "long",
+      year: "numeric",
+    });
+
+    calendarDays.innerHTML = "";
+
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+
+      const dayElement = createDayElement(date.getDate(), "");
+
+      if (date.getMonth() !== currentMonth) {
+        dayElement.classList.add("other-month");
+      }
+
+      if (date.toDateString() === currentDate.toDateString()) {
+        dayElement.classList.add("today");
+      }
+
+      if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+        dayElement.classList.add("selected");
+      }
+
+      dayElement.addEventListener("click", () => selectDate(date));
+      calendarDays.appendChild(dayElement);
+    }
+  }
+
+  function createDayElement(day, className = "") {
+    const div = document.createElement("div");
+    div.className = `calendar-day ${className}`;
+    div.textContent = day;
+    return div;
+  }
+
+  function selectDate(date) {
+    selectedDate = date;
+    updateSelectedDate(date);
+    closeDropdown();
+
+    // Call the callback function if provided
+    if (onDateSelect && typeof onDateSelect === "function") {
+      onDateSelect(date);
+    }
+  }
+
+  function updateSelectedDate(date) {
+    const formattedDate = formatDateToDDMMYYYY(date);
+
+    selectedDateDisplay.textContent = formattedDate;
+    if (dateInput) {
+      dateInput.value = formatDateToYYYYMMDDLocal(date);
+    }
+  }
+
+  // Event listeners
+  datePickerTrigger.addEventListener("click", toggleDropdown);
+
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener("click", () => {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar();
+    });
+  }
+
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener("click", () => {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar();
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (
+      !datePickerTrigger.contains(e.target) &&
+      !calendarDropdown.contains(e.target)
+    ) {
+      closeDropdown();
+    }
+  });
+}
+
+// Utility: format Date as YYYY-MM-DD in local time
+export function formatDateToYYYYMMDDLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

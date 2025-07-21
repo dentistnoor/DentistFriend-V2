@@ -1,0 +1,381 @@
+.analytics-filters {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.analytics-date-range h3 {
+  margin: 0 0 16px 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.analytics-date-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analytics-date-inputs {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0; /* Prevent flex items from overflowing */
+}
+
+.date-input-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.analytics-date-input {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 2px solid #d9e0fe;
+  border-radius: 8px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: #2f3828;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.analytics-date-input:hover {
+  border-color: #d9e0fe;
+  background: #f9fafb;
+}
+
+.analytics-date-input:focus {
+  outline: none;
+  border-color: #d9e0fe;
+  box-shadow: none;
+  background: #f9fafb;
+}
+
+.analytics-date-presets {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.analytics-preset-btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.analytics-preset-btn:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.analytics-preset-btn.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.analytics-preset-btn.clear-btn {
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.analytics-preset-btn.clear-btn:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0; /* Prevent flex items from overflowing */
+  overflow: hidden;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.patient-icon {
+  background-color: #6366f1;
+  color: white;
+}
+
+.cash-icon {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.insurance-icon {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.total-collection-icon {
+  background-color: #10b981;
+  color: white;
+}
+
+.cash-collection-icon {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.insurance-collection-icon {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.metric-content {
+  flex: 1;
+  min-width: 0; /* Prevent text overflow */
+  overflow: hidden;
+}
+
+.metric-value {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-label {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Charts Section */
+.charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  min-width: 0; /* Prevent flex items from overflowing */
+  overflow: hidden;
+}
+
+.chart-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-header {
+  margin-bottom: 20px;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.chart-container canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+
+  .charts-row {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-filters {
+    padding: 20px;
+  }
+
+  .analytics-date-inputs {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .analytics-date-presets {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .analytics-preset-btn {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 18px;
+  }
+
+  .chart-card {
+    padding: 16px;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .chart-header h3 {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-date-presets {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .analytics-preset-btn {
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+
+  .metric-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .metric-value {
+    font-size: 16px;
+  }
+
+  .metric-content {
+    text-align: center;
+  }
+}
