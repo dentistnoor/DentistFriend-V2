@@ -484,15 +484,24 @@ function addEditProcedureItem(existingProcedure = null) {
   const procedureName = existingProcedure
     ? existingProcedure.name || existingProcedure.procedure || ""
     : "";
-  const procedurePrice = existingProcedure
-    ? existingProcedure.price || existingProcedure.finalAmount || 0
-    : 0;
-  const procedureDiscount = existingProcedure
-    ? existingProcedure.discount || 0
-    : 0;
-  const procedureFinal = existingProcedure
-    ? existingProcedure.finalAmount || existingProcedure.price || 0
-    : 0;
+  // Use saved values if present, otherwise fallback to defaults
+  const procedurePrice =
+    existingProcedure && typeof existingProcedure.price !== "undefined"
+      ? existingProcedure.price
+      : existingProcedure &&
+        typeof existingProcedure.finalAmount !== "undefined"
+      ? existingProcedure.finalAmount
+      : 0;
+  const procedureDiscount =
+    existingProcedure && typeof existingProcedure.discount !== "undefined"
+      ? existingProcedure.discount
+      : 0;
+  const procedureFinal =
+    existingProcedure && typeof existingProcedure.finalAmount !== "undefined"
+      ? existingProcedure.finalAmount
+      : existingProcedure && typeof existingProcedure.price !== "undefined"
+      ? existingProcedure.price
+      : 0;
 
   // If the procedureName is not in the options, add it as a temporary option
   if (procedureName && !optionValues.includes(procedureName)) {
@@ -516,7 +525,7 @@ function addEditProcedureItem(existingProcedure = null) {
       </div>
       <div class="form-group">
         <label for="edit-procedure-price-${procedureId}">Price (SAR)</label>
-        <input type="number" id="edit-procedure-price-${procedureId}" name="edit-procedure-price-${procedureId}" placeholder="0.00" step="0.01" min="0" value="${procedurePrice}" oninput="onEditProcedurePriceOrDiscountChange(${procedureId})" required />
+        <input type="number" id="edit-procedure-price-${procedureId}" name="edit-procedure-price-${procedureId}" placeholder="0.00" step="0.01" min="0" value="${procedurePrice}" oninput="onEditProcedurePriceOrDiscountChange(${procedureId})" required data-net="" />
       </div>
       <div class="form-group">
         <label for="edit-procedure-discount-${procedureId}">Discount (%)</label>
@@ -531,16 +540,21 @@ function addEditProcedureItem(existingProcedure = null) {
 
   proceduresList.appendChild(procedureItem);
   editProcedureCounter++;
-  updateEditTotalAmount();
-
   // Set selected value if editing
   if (procedureName) {
     const select = document.getElementById(
       `edit-procedure-name-${procedureId}`
     );
     select.value = procedureName;
-    window.onEditProcedureSelect(procedureId);
+    const selectedOption = select.options[select.selectedIndex];
+    const priceInput = document.getElementById(
+      `edit-procedure-price-${procedureId}`
+    );
+    if (selectedOption && selectedOption.dataset.net) {
+      priceInput.setAttribute("data-net", selectedOption.dataset.net);
+    }
   }
+  updateEditTotalAmount();
 }
 
 function removeEditProcedureItem(procedureId) {
@@ -565,30 +579,11 @@ function updateEditTotalAmount() {
   );
 
   procedureItems.forEach((item) => {
-    const priceInput = item.querySelector(
-      'input[name^="edit-procedure-price-"]'
-    );
-    const discountInput = item.querySelector(
-      'input[name^="edit-procedure-discount-"]'
-    );
     const finalInput = item.querySelector(
       'input[name^="edit-procedure-final-"]'
     );
-
-    if (
-      priceInput &&
-      priceInput.value &&
-      discountInput &&
-      discountInput.value &&
-      finalInput &&
-      finalInput.value
-    ) {
-      const price = parseFloat(priceInput.value) || 0;
-      const discount = parseFloat(discountInput.value) || 0;
-      const final = parseFloat(finalInput.value) || 0;
-      const net = price - (price * discount) / 100;
-      total += net;
-    }
+    const final = parseFloat(finalInput.value) || 0;
+    total += final;
   });
 
   document.getElementById("edit-total-amount").value = total.toFixed(2);
@@ -694,17 +689,15 @@ window.onEditProcedureSelect = function (procedureId) {
   const finalInput = document.getElementById(
     `edit-procedure-final-${procedureId}`
   );
-  if (selectedOption && selectedOption.dataset.price) {
+  if (
+    selectedOption &&
+    selectedOption.dataset.price &&
+    selectedOption.dataset.net
+  ) {
+    priceInput.setAttribute("data-net", selectedOption.dataset.net);
     priceInput.value = selectedOption.dataset.price;
-    if (selectedOption.dataset.discount !== undefined) {
-      discountInput.value = selectedOption.dataset.discount || 0;
-    } else {
-      discountInput.value = discountInput.value || 0;
-    }
-    const price = parseFloat(priceInput.value) || 0;
-    const discount = parseFloat(discountInput.value) || 0;
-    const final = price - (price * discount) / 100;
-    finalInput.value = final.toFixed(2);
+    discountInput.value = selectedOption.dataset.discount || 0;
+    finalInput.value = selectedOption.dataset.net;
   } else {
     priceInput.value = "";
     discountInput.value = "";
@@ -729,9 +722,9 @@ window.onEditProcedurePriceOrDiscountChange = function (procedureId) {
   const finalInput = item.querySelector(
     `input[name="edit-procedure-final-${procedureId}"]`
   );
-  const price = parseFloat(priceInput.value) || 0;
+  const net = parseFloat(priceInput.getAttribute("data-net")) || 0;
   const discount = parseFloat(discountInput.value) || 0;
-  const final = price - (price * discount) / 100;
+  const final = net - (net * discount) / 100;
   finalInput.value = final.toFixed(2);
   updateEditTotalAmount();
 };

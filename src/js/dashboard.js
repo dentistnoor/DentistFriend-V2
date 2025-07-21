@@ -253,7 +253,7 @@ function addProcedureItem() {
       </div>
       <div class="form-group">
         <label for="procedure-discount-${procedureCounter}">Discount (%)</label>
-        <input type="number" id="procedure-discount-${procedureCounter}" name="procedure-discount-${procedureCounter}" placeholder="0" step="0.01" min="0" max="100" onchange="onDiscountChange(${procedureCounter})">
+        <input type="number" id="procedure-discount-${procedureCounter}" name="procedure-discount-${procedureCounter}" placeholder="0" step="0.01" min="0" max="100" oninput="onDiscountChange(${procedureCounter})">
       </div>
       <div class="form-group">
         <label for="procedure-final-${procedureCounter}">Final Amount (SAR)</label>
@@ -349,7 +349,11 @@ function onProcedureSelect(procedureId) {
   const select = document.getElementById(`procedure-name-${procedureId}`);
   const selectedOption = select.options[select.selectedIndex];
 
-  if (selectedOption && selectedOption.dataset.price) {
+  if (
+    selectedOption &&
+    selectedOption.dataset.price &&
+    selectedOption.dataset.net
+  ) {
     const priceInput = document.getElementById(
       `procedure-price-${procedureId}`
     );
@@ -359,18 +363,13 @@ function onProcedureSelect(procedureId) {
     const finalInput = document.getElementById(
       `procedure-final-${procedureId}`
     );
+    // Store NET as a data attribute for this row
+    priceInput.setAttribute("data-net", selectedOption.dataset.net);
 
     priceInput.value = selectedOption.dataset.price;
     discountInput.value = selectedOption.dataset.discount || 0;
-
-    const price = parseFloat(selectedOption.dataset.price) || 0;
-    const discount = parseFloat(selectedOption.dataset.discount) || 0;
-    const final = price - (price * discount) / 100;
-
-    finalInput.value = final.toFixed(2);
+    finalInput.value = selectedOption.dataset.net;
     updateTotalAmount();
-
-    // Update field editability after filling data
     const patientType = document.getElementById("patient-type").value;
     updateFieldEditability(patientType);
   }
@@ -382,11 +381,10 @@ function onDiscountChange(procedureId) {
     `procedure-discount-${procedureId}`
   );
   const finalInput = document.getElementById(`procedure-final-${procedureId}`);
-
-  const price = parseFloat(priceInput.value) || 0;
+  // Always use NET from data attribute
+  const net = parseFloat(priceInput.getAttribute("data-net")) || 0;
   const discount = parseFloat(discountInput.value) || 0;
-  const final = price - (price * discount) / 100;
-
+  const final = net - (net * discount) / 100;
   finalInput.value = final.toFixed(2);
   updateTotalAmount();
 }
