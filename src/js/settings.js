@@ -180,22 +180,21 @@ function setupFileUpload(uploadArea, fileInput, statusId, type) {
   uploadArea.addEventListener("drop", (e) => {
     e.preventDefault();
     uploadArea.classList.remove("dragover");
-
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      handleFileSelect(files[0], fileInput, statusElement, uploadArea, type);
+      // No preview needed
+      for (const file of files) {
+        handleFileSelect(file, fileInput, statusElement, uploadArea, type);
+      }
     }
   });
 
   fileInput.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
-      handleFileSelect(
-        e.target.files[0],
-        fileInput,
-        statusElement,
-        uploadArea,
-        type
-      );
+      // No preview needed
+      for (const file of e.target.files) {
+        handleFileSelect(file, fileInput, statusElement, uploadArea, type);
+      }
     }
   });
 }
@@ -225,7 +224,6 @@ function handleFileSelect(file, fileInput, statusElement, uploadArea, type) {
     return;
   }
 
-  showFilePreview(file, uploadArea, statusElement);
   updateStatus(statusElement, "Processing file...", "info");
 
   parseExcelFile(file, type, statusElement);
@@ -290,7 +288,6 @@ function parseCashProcedures(data) {
     const row = data[i];
     if (row && row.length > 0) {
       const firstCell = row[0] ? row[0].toString().trim().toLowerCase() : "";
-      // If first cell contains "product" or "code", this is likely the header row
       if (firstCell.includes("product") || firstCell.includes("code")) {
         headerRowIndex = i;
         break;
@@ -309,10 +306,18 @@ function parseCashProcedures(data) {
     h.toLowerCase().includes("price")
   );
   const netIndex = headers.findIndex((h) => h.toLowerCase().includes("net"));
+  const discountIndex = headers.findIndex((h) =>
+    h.toLowerCase().includes("discount")
+  );
 
   if (descriptionIndex === -1 || priceIndex === -1 || netIndex === -1) {
     throw new Error(
       "Required columns not found. Please check the file format."
+    );
+  }
+  if (discountIndex !== -1) {
+    throw new Error(
+      "This file appears to be for insurance, not cash. Please upload it in the correct section."
     );
   }
 
@@ -330,7 +335,6 @@ function parseCashProcedures(data) {
       });
     }
   }
-
   localStorage.setItem("cashProcedures", JSON.stringify(cashProcedures));
   displayUploadedFiles();
 }
@@ -348,7 +352,6 @@ function parseInsuranceProcedures(data, fileName) {
     const row = data[i];
     if (row && row.length > 0) {
       const firstCell = row[0] ? row[0].toString().trim().toLowerCase() : "";
-      // If first cell contains "product" or "code", this is likely the header row
       if (firstCell.includes("product") || firstCell.includes("code")) {
         headerRowIndex = i;
         break;
@@ -385,8 +388,6 @@ function parseInsuranceProcedures(data, fileName) {
   const companyName = fileName.replace(/\.(xlsx|xls|csv)$/i, "").trim();
 
   const procedures = [];
-
-  // Start reading data from the row after headers
   for (let i = headerRowIndex + 1; i < data.length; i++) {
     const row = data[i];
     if (row && row[descriptionIndex] && row[priceIndex]) {
@@ -398,7 +399,6 @@ function parseInsuranceProcedures(data, fileName) {
       });
     }
   }
-
   insuranceProcedures[companyName] = procedures;
   localStorage.setItem(
     "insuranceProcedures",
@@ -407,68 +407,12 @@ function parseInsuranceProcedures(data, fileName) {
   displayUploadedFiles();
 }
 
-function showFilePreview(file, uploadArea, statusElement) {
-  const existingPreview = uploadArea.querySelector(".file-preview");
-  if (existingPreview) {
-    existingPreview.remove();
-  }
-
-  const filePreview = document.createElement("div");
-  filePreview.className = "file-preview";
-
-  const fileSize = formatFileSize(file.size);
-
-  filePreview.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-      <polyline points="14,2 14,8 20,8"></polyline>
-      <line x1="16" y1="13" x2="8" y2="13"></line>
-      <line x1="16" y1="17" x2="8" y2="17"></line>
-      <polyline points="10,9 9,9 8,9"></polyline>
-    </svg>
-    <div class="file-info">
-      <div class="file-name">${file.name}</div>
-      <div class="file-size">${fileSize}</div>
-    </div>
-    <button type="button" class="remove-file" onclick="removeFile(this)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-  `;
-
-  uploadArea.appendChild(filePreview);
-}
-
-function formatFileSize(bytes) {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
-
 function updateStatus(statusElement, message, type) {
   if (statusElement) {
     statusElement.textContent = message;
     statusElement.className = `upload-status ${type}`;
   }
 }
-
-window.removeFile = function (button) {
-  const filePreview = button.closest(".file-preview");
-  const uploadArea = filePreview.closest(".file-upload-area");
-  const fileInput = uploadArea.querySelector(".file-input");
-  const statusElement =
-    uploadArea.parentElement.querySelector(".upload-status");
-
-  filePreview.remove();
-  fileInput.value = "";
-  updateStatus(statusElement, "", "");
-};
 
 // Export functions for use in other modules
 window.getCashProcedures = function () {
