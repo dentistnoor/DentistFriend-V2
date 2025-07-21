@@ -401,6 +401,42 @@ function initializeCharts() {
       },
     });
   }
+
+  // Popular Insurance Chart
+  const insuranceCtx = document.getElementById("insuranceChart");
+  if (insuranceCtx) {
+    charts.insurance = new Chart(insuranceCtx, {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Patients",
+            data: [],
+            backgroundColor: "#8b5cf6",
+            borderRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+            },
+          },
+        },
+      },
+    });
+  }
 }
 
 function updateCharts(data) {
@@ -409,6 +445,7 @@ function updateCharts(data) {
   updateAgeGroupChart(data);
   updateRevenueChart(data);
   updateProceduresChart(data);
+  updateInsuranceChart(data);
 }
 
 function updatePatientTypeChart(data) {
@@ -499,4 +536,24 @@ function updateProceduresChart(data) {
   charts.procedures.data.labels = procedureNames;
   charts.procedures.data.datasets[0].data = procedureCountsArray;
   charts.procedures.update();
+}
+
+function updateInsuranceChart(data) {
+  if (!charts.insurance) return;
+  // Count insurance occurrences
+  const insuranceCounts = {};
+  data.forEach((patient) => {
+    if (patient.insuranceCompany) {
+      if (!insuranceCounts[patient.insuranceCompany]) {
+        insuranceCounts[patient.insuranceCompany] = 0;
+      }
+      insuranceCounts[patient.insuranceCompany]++;
+    }
+  });
+  const sorted = Object.entries(insuranceCounts).sort((a, b) => b[1] - a[1]);
+  const labels = sorted.map(([name]) => name);
+  const counts = sorted.map(([, count]) => count);
+  charts.insurance.data.labels = labels;
+  charts.insurance.data.datasets[0].data = counts;
+  charts.insurance.update();
 }
