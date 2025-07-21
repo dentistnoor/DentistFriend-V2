@@ -11,9 +11,8 @@ document.addEventListener("DOMContentLoaded", function () {
       .value.trim();
     const email = document.getElementById("signup-email").value.trim();
     const password = document.getElementById("signup-password").value.trim();
-    const sheetsUrl = document.getElementById("signup-sheets-url").value.trim();
 
-    if (doctorName && email && password && sheetsUrl) {
+    if (doctorName && email && password) {
       const submitBtn = form.querySelector(".login-btn");
       const originalText = submitBtn.innerHTML;
       submitBtn.innerHTML = "<span>Creating Account...</span>";
@@ -26,20 +25,6 @@ document.addEventListener("DOMContentLoaded", function () {
           password
         );
         const user = userCredential.user;
-
-        // Store doctor data in localStorage (placeholder for Google Sheets integration)
-        localStorage.setItem(
-          "doctorData",
-          JSON.stringify({
-            doctorName: doctorName,
-            email: email,
-            sheetsUrl: sheetsUrl,
-            uid: user.uid,
-          })
-        );
-
-        // TODO: Integrate with Google Sheets API
-        // await syncDoctorToGoogleSheets(doctorData);
 
         showSuccess("Account created successfully! Redirecting to sign in...");
 
