@@ -425,9 +425,12 @@ function setupDatePicker() {
   const calendarDays = document.getElementById("calendar-days");
 
   let currentDate = new Date();
-  let selectedDate = null;
+  let selectedDate = new Date(); // Set default to today
   let currentMonth = currentDate.getMonth();
   let currentYear = currentDate.getFullYear();
+
+  // Set initial display and input to today
+  updateSelectedDate(selectedDate);
 
   function toggleDropdown() {
     const isOpen = calendarDropdown.classList.contains("show");
