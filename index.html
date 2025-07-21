@@ -10,6 +10,27 @@
     />
     <link rel="stylesheet" href="src/css/auth.css" />
   </head>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
+    }
+    footer {
+      position: fixed;
+      left: 0;
+      bottom: 16px;
+      width: 100vw;
+      text-align: center;
+      font-size: 0.95rem;
+      margin-top: 0;
+      background: none;
+      border: none;
+      z-index: 100;
+    }
+  </style>
   <body>
     <div class="container">
       <div class="login-card">
@@ -23,6 +44,31 @@
           <a href="src/html/signup.html" class="sign-btn secondary">Sign Up</a>
         </div>
       </div>
+      <footer>
+        <div>🔓 FOSS (Free and Open Source Software)</div>
+        <div>
+          <a
+            href="https://github.com/dentistnoor/DentistFriend-V2"
+            target="_blank"
+            rel="noopener"
+            >GitHub</a
+          >
+          •
+          <a
+            href="https://github.com/dentistnoor/DentistFriend-V2/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener"
+            >License</a
+          >
+          •
+          <a
+            href="https://github.com/dentistnoor/DentistFriend-V2/blob/main/README.md"
+            target="_blank"
+            rel="noopener"
+            >Documentation</a
+          >
+        </div>
+      </footer>
     </div>
   </body>
 </html>
