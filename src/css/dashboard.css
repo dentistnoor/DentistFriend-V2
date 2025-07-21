@@ -574,13 +574,15 @@
 }
 
 .patients-date-presets {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  display: flex;
+  flex-direction: row;
   gap: 8px;
   width: 100%;
 }
 
 .patients-preset-btn {
+  flex: 1 1 0;
+  min-width: 0;
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   background-color: white;
@@ -592,7 +594,6 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   text-align: center;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;

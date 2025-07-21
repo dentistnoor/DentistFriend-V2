@@ -75,8 +75,26 @@ function handlePresetFilter(e) {
   // Clear date inputs
   const fromDateInput = document.getElementById("analytics-from-date");
   const toDateInput = document.getElementById("analytics-to-date");
-  if (fromDateInput) fromDateInput.value = "";
-  if (toDateInput) toDateInput.value = "";
+  const fromDateDisplay = document.getElementById("analytics-from-date-display");
+  const toDateDisplay = document.getElementById("analytics-to-date-display");
+
+  if (range === "today") {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const isoDate = `${yyyy}-${mm}-${dd}`;
+    const displayDate = `${dd}/${mm}/${yyyy}`;
+    if (fromDateInput) fromDateInput.value = isoDate;
+    if (toDateInput) toDateInput.value = isoDate;
+    if (fromDateDisplay) fromDateDisplay.textContent = displayDate;
+    if (toDateDisplay) toDateDisplay.textContent = displayDate;
+  } else {
+    if (fromDateInput) fromDateInput.value = "";
+    if (toDateInput) toDateInput.value = "";
+    if (fromDateDisplay) fromDateDisplay.textContent = "dd/mm/yyyy";
+    if (toDateDisplay) toDateDisplay.textContent = "dd/mm/yyyy";
+  }
 
   currentPeriod = range;
   updateAnalytics();

@@ -149,6 +149,11 @@ function setDateRange(range) {
       fromDateInput.value = threeMonthsAgo.toISOString().split("T")[0];
       toDateInput.value = today.toISOString().split("T")[0];
       break;
+    case "365":
+      const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+      fromDateInput.value = yearAgo.toISOString().split("T")[0];
+      toDateInput.value = today.toISOString().split("T")[0];
+      break;
     default:
       fromDateInput.value = "";
       toDateInput.value = "";
