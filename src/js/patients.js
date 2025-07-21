@@ -19,6 +19,11 @@ document.addEventListener("DOMContentLoaded", function () {
     setupPatientsDatePickers();
     loadPatients();
     loadStoredProcedures();
+    // Export button logic
+    const exportBtn = document.getElementById("export-patients-btn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", exportPatientsToCSV);
+    }
   });
 });
 
@@ -789,4 +794,47 @@ if (editInsuranceCompany) {
     editProcedureCounter = 0;
     currentProcedures.forEach((proc) => addEditProcedureItem(proc));
   });
+}
+
+function exportPatientsToCSV() {
+  // Use filteredPatients for export
+  const data = filteredPatients.length ? filteredPatients : allPatients;
+  if (!data.length) {
+    showError("No patient records to export.");
+    return;
+  }
+  const headers = [
+    "S.No.",
+    "Visit Date",
+    "Patient Name",
+    "File Number",
+    "Age",
+    "Gender",
+    "Type",
+    "Insurance",
+    "Procedures",
+    "Total Amount",
+    "Remarks"
+  ];
+  const rows = data.map((p, i) => [
+    i + 1,
+    p.visitDate,
+    p.patientName,
+    p.fileNumber,
+    p.patientAge,
+    p.patientGender,
+    p.patientType,
+    p.insuranceCompany || "",
+    (p.procedures || []).map(proc => proc.name).join("; "),
+    `SAR ${p.totalAmount}`,
+    p.remarks ? p.remarks.replace(/\n/g, " ") : ""
+  ]);
+  let csvContent = headers.join(",") + "\n" + rows.map(r => r.map(field => '"' + String(field).replace(/"/g, '""') + '"').join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `patients_export_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
