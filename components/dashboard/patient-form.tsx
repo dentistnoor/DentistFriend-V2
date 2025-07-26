@@ -430,7 +430,7 @@ export function PatientForm({
       visitDate: visitDate,
       patientName: patientName,
       fileNumber: fileNumber,
-      age: Number.parseInt(age),
+      age: age && age.trim() !== "" ? Number.parseInt(age) : "",
       gender: formatGenderForDB(gender),
       type: patientType,
       procedures: procedures.filter((p) => p.name.trim() !== ""),
@@ -450,11 +450,27 @@ export function PatientForm({
     if (
       !patientData.visitDate ||
       !patientData.patientName ||
-      !patientData.fileNumber
+      !patientData.fileNumber ||
+      !gender ||
+      !patientType
     ) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate insurance company if patient type is Insurance
+    if (
+      patientType === "Insurance" &&
+      (!insuranceCompany || insuranceCompany.trim() === "")
+    ) {
+      toast({
+        title: "Validation Error",
+        description: "Please select an insurance company.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -618,7 +634,6 @@ export function PatientForm({
                 placeholder="Enter age"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                required
               />
             </div>
             <div className="space-y-2">

@@ -81,6 +81,13 @@ export function PatientTable({
     return `SAR ${amount.toFixed(2)}`;
   };
 
+  const formatAge = (age: number | string) => {
+    if (!age || age === "" || age === "NaN" || isNaN(Number(age))) {
+      return "-";
+    }
+    return age.toString();
+  };
+
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
@@ -128,7 +135,7 @@ export function PatientTable({
                     {patient.patientName}
                   </TableCell>
                   <TableCell>{patient.fileNumber}</TableCell>
-                  <TableCell>{patient.age}</TableCell>
+                  <TableCell>{formatAge(patient.age)}</TableCell>
                   <TableCell>{formatGender(patient.gender)}</TableCell>
                   <TableCell>
                     <Badge

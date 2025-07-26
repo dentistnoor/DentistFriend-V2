@@ -146,6 +146,11 @@ export function Dashboard({ isSidebarCollapsed = false }: DashboardProps) {
         break;
     }
 
+    // Sort patients alphabetically by patient name
+    filtered = filtered.sort((a, b) =>
+      a.patientName.localeCompare(b.patientName),
+    );
+
     setFilteredPatients(filtered);
   }, [patients, searchTerm, dateFilter, customDateRange]);
 
