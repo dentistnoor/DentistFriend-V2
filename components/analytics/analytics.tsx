@@ -28,7 +28,7 @@ import {
   Line,
 } from "recharts";
 import { Users, DollarSign, CreditCard, FileText, Wallet } from "lucide-react";
-import { formatDateForDisplay } from "@/lib/utils";
+import { formatDateForDisplay, formatGender } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface AnalyticsPageProps {
@@ -162,29 +162,38 @@ export function AnalyticsPage({
   ];
 
   const genderData = [
-    ...(filteredPatients.filter((p) => p.gender === "Male").length > 0
+    ...(filteredPatients.filter((p) => formatGender(p.gender) === "Male")
+      .length > 0
       ? [
           {
             name: "Male",
-            value: filteredPatients.filter((p) => p.gender === "Male").length,
+            value: filteredPatients.filter(
+              (p) => formatGender(p.gender) === "Male",
+            ).length,
             color: "#3b82f6",
           },
         ]
       : []),
-    ...(filteredPatients.filter((p) => p.gender === "Female").length > 0
+    ...(filteredPatients.filter((p) => formatGender(p.gender) === "Female")
+      .length > 0
       ? [
           {
             name: "Female",
-            value: filteredPatients.filter((p) => p.gender === "Female").length,
+            value: filteredPatients.filter(
+              (p) => formatGender(p.gender) === "Female",
+            ).length,
             color: "#ec4899",
           },
         ]
       : []),
-    ...(filteredPatients.filter((p) => p.gender === "Other").length > 0
+    ...(filteredPatients.filter((p) => formatGender(p.gender) === "Other")
+      .length > 0
       ? [
           {
             name: "Other",
-            value: filteredPatients.filter((p) => p.gender === "Other").length,
+            value: filteredPatients.filter(
+              (p) => formatGender(p.gender) === "Other",
+            ).length,
             color: "#10b981",
           },
         ]

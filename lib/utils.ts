@@ -33,3 +33,38 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
+
+export function formatGender(gender: string): string {
+  if (!gender) return "";
+
+  // Handle different gender formats
+  switch (gender.toUpperCase()) {
+    case "M":
+    case "MALE":
+      return "Male";
+    case "F":
+    case "FEMALE":
+      return "Female";
+    case "O":
+    case "OTHER":
+      return "Other";
+    default:
+      return gender; // Return as-is if it's already in full form
+  }
+}
+
+export function formatGenderForDB(gender: string): string {
+  if (!gender) return "";
+
+  // Convert full form back to single character for database storage
+  switch (gender.toLowerCase()) {
+    case "male":
+      return "M";
+    case "female":
+      return "F";
+    case "other":
+      return "O";
+    default:
+      return gender; // Return as-is if it's already single character
+  }
+}

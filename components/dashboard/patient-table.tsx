@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatDateForDisplay } from "@/lib/utils";
+import { formatDateForDisplay, formatGender } from "@/lib/utils";
 
 interface PatientTableProps {
   patients: PatientRecord[];
@@ -43,8 +43,15 @@ export function PatientTable({
   const [deletePatient, setDeletePatient] = useState<PatientRecord | null>(
     null,
   );
+  const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(patients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPatients = patients.slice(startIndex, endIndex);
 
   const handleDelete = async () => {
     if (!deletePatient || !user?.email) return;
@@ -74,6 +81,10 @@ export function PatientTable({
     return `SAR ${amount.toFixed(2)}`;
   };
 
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -94,7 +105,7 @@ export function PatientTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {patients.length === 0 ? (
+            {currentPatients.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={11}
@@ -105,9 +116,11 @@ export function PatientTable({
                 </TableCell>
               </TableRow>
             ) : (
-              patients.map((patient, index) => (
+              currentPatients.map((patient, index) => (
                 <TableRow key={patient.id}>
-                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell className="font-medium">
+                    {startIndex + index + 1}
+                  </TableCell>
                   <TableCell>
                     {formatDateForDisplay(patient.visitDate)}
                   </TableCell>
@@ -116,7 +129,7 @@ export function PatientTable({
                   </TableCell>
                   <TableCell>{patient.fileNumber}</TableCell>
                   <TableCell>{patient.age}</TableCell>
-                  <TableCell>{patient.gender}</TableCell>
+                  <TableCell>{formatGender(patient.gender)}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -163,6 +176,51 @@ export function PatientTable({
         </Table>
       </div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, patients.length)} of{" "}
+            {patients.length} results
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => goToPage(page)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {page}
+                  </Button>
+                ),
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       <AlertDialog
         open={!!deletePatient}
         onOpenChange={() => setDeletePatient(null)}
@@ -177,12 +235,7 @@ export function PatientTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

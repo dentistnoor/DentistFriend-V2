@@ -39,8 +39,14 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, X } from "lucide-react";
-import { formatDateForInput, getTodayDateForInput } from "@/lib/utils";
+import {
+  formatDateForInput,
+  getTodayDateForInput,
+  formatGender,
+  formatGenderForDB,
+} from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input";
+import { Badge } from "@/components/ui/badge";
 
 interface PatientFormProps {
   open: boolean;
@@ -126,25 +132,36 @@ export function PatientForm({
       setPatientName(patient.patientName);
       setFileNumber(patient.fileNumber);
       setAge(patient.age.toString());
-      setGender(patient.gender);
+      setGender(formatGender(patient.gender) as "Male" | "Female" | "Other");
       setInsuranceCompany(patient.insuranceCompany || "");
       setRemarks(patient.remarks || "");
       setPatientType(patient.type);
-      setProcedures(
-        patient.procedures?.map((p) => ({
+
+      // Map procedures to include templateId by matching procedure names
+      const mappedProcedures = patient.procedures?.map((p) => {
+        // Find matching template by name
+        const matchingTemplate = procedureTemplates.find(
+          (template) => template.name.toLowerCase() === p.name.toLowerCase(),
+        );
+
+        return {
           ...p,
-          templateId: p.templateId || "",
-        })) || [
-          {
-            id: "1",
-            name: "",
-            price: 0,
-            discount: 0,
-            finalAmount: 0,
-            templateId: "",
-          },
-        ],
-      );
+          templateId: matchingTemplate?.id || "",
+          // If no matching template found, keep the original name for display
+          name: matchingTemplate ? matchingTemplate.name : p.name,
+        };
+      }) || [
+        {
+          id: "1",
+          name: "",
+          price: 0,
+          discount: 0,
+          finalAmount: 0,
+          templateId: "",
+        },
+      ];
+
+      setProcedures(mappedProcedures);
     } else {
       resetForm();
     }
@@ -155,10 +172,15 @@ export function PatientForm({
       loadProcedureTemplates();
       loadInsuranceCompanies();
       loadProcedureInsurancePrices();
-      // Load patient data when opening the form
+    }
+  }, [open]);
+
+  // Load patient data after procedure templates are loaded
+  useEffect(() => {
+    if (open && procedureTemplates.length > 0) {
       loadPatientData();
     }
-  }, [open, patient]);
+  }, [open, patient, procedureTemplates]);
 
   // Update procedures when insurance company or patient type changes
   useEffect(() => {
@@ -281,18 +303,15 @@ export function PatientForm({
   };
 
   const addProcedure = () => {
-    const newId = (procedures.length + 1).toString();
-    setProcedures([
-      ...procedures,
-      {
-        id: newId,
-        name: "",
-        price: 0,
-        discount: 0,
-        finalAmount: 0,
-        templateId: "",
-      },
-    ]);
+    const newProcedure: ProcedureItem = {
+      id: Date.now().toString(),
+      name: "",
+      price: 0,
+      discount: 0,
+      finalAmount: 0,
+      templateId: "", // Empty templateId means it will show as dropdown for new procedures
+    };
+    setProcedures([...procedures, newProcedure]);
   };
 
   const removeProcedure = (id: string) => {
@@ -412,7 +431,7 @@ export function PatientForm({
       patientName: patientName,
       fileNumber: fileNumber,
       age: Number.parseInt(age),
-      gender: gender as "Male" | "Female" | "Other",
+      gender: formatGenderForDB(gender),
       type: patientType,
       procedures: procedures.filter((p) => p.name.trim() !== ""),
       totalAmount: calculateTotalAmount(),
@@ -666,7 +685,14 @@ export function PatientForm({
             {procedures.map((procedure, index) => (
               <Card key={procedure.id} className="p-4">
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-medium">Procedure {index + 1}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">Procedure {index + 1}</h4>
+                    {procedure.name && !procedure.templateId && (
+                      <Badge variant="secondary" className="text-xs">
+                        OCR
+                      </Badge>
+                    )}
+                  </div>
                   {procedures.length > 1 && (
                     <Button
                       type="button"
@@ -683,24 +709,35 @@ export function PatientForm({
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Procedure Name</Label>
-                    <Select
-                      value={procedure.templateId}
-                      onValueChange={(value) => {
-                        selectProcedureTemplate(procedure.id, value);
-                      }}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select procedure" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {procedureTemplates.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {procedure.templateId || !procedure.name ? (
+                      <Select
+                        value={procedure.templateId}
+                        onValueChange={(value) => {
+                          selectProcedureTemplate(procedure.id, value);
+                        }}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select procedure" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {procedureTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        value={procedure.name}
+                        onChange={(e) =>
+                          updateProcedure(procedure.id, "name", e.target.value)
+                        }
+                        placeholder="Enter procedure name"
+                        required
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Discount (%)</Label>

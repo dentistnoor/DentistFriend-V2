@@ -56,3 +56,4 @@ export function getFirestoreInstance(): Firestore {
 
 // Export config for debugging
 export { firebaseConfig };
+export { getFirestoreInstance as db };
