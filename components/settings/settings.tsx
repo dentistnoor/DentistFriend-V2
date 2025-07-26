@@ -733,6 +733,11 @@ export function SettingsPage({
                 </Button>
               </form>
 
+              {/* Total Procedures Summary */}
+              <div className="text-sm text-gray-500 mb-2">
+                Total Procedures: {procedureTemplates.length}
+              </div>
+
               <div className="space-y-4">
                 <Table>
                   <TableHeader>
@@ -931,6 +936,11 @@ export function SettingsPage({
                   </div>
                 </div>
               </form>
+
+              {/* Total Insurance Companies Summary */}
+              <div className="text-sm text-gray-500 mb-2">
+                Total Insurance Companies: {insuranceCompanies.length}
+              </div>
 
               <div className="space-y-4">
                 <Table>
