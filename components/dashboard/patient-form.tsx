@@ -17,6 +17,7 @@ import type {
   ProcedureItem,
   ProcedureTemplate,
   InsuranceCompany,
+  ProcedureInsurancePrice,
 } from "@/types/patient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +93,9 @@ export function PatientForm({
   const [insuranceCompanies, setInsuranceCompanies] = useState<
     InsuranceCompany[]
   >([]);
+  const [procedureInsurancePrices, setProcedureInsurancePrices] = useState<
+    ProcedureInsurancePrice[]
+  >([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -150,10 +154,24 @@ export function PatientForm({
     if (open) {
       loadProcedureTemplates();
       loadInsuranceCompanies();
+      loadProcedureInsurancePrices();
       // Load patient data when opening the form
       loadPatientData();
     }
   }, [open, patient]);
+
+  // Update procedures when insurance company or patient type changes
+  useEffect(() => {
+    if (open && procedures.length > 0) {
+      updateAllProceduresForInsurance();
+    }
+  }, [
+    insuranceCompany,
+    patientType,
+    procedureTemplates,
+    insuranceCompanies,
+    procedureInsurancePrices,
+  ]);
 
   const loadProcedureTemplates = async () => {
     if (!user?.email) return;
@@ -197,6 +215,71 @@ export function PatientForm({
     }
   };
 
+  const loadProcedureInsurancePrices = async () => {
+    if (!user?.email) return;
+    try {
+      const db = getFirestoreInstance();
+      const snapshot = await getDocs(
+        collection(db, "doctors", user.email, "procedure_insurance_prices"),
+      );
+      const prices: ProcedureInsurancePrice[] = [];
+      snapshot.forEach((doc) => {
+        prices.push({ id: doc.id, ...doc.data() } as ProcedureInsurancePrice);
+      });
+      setProcedureInsurancePrices(prices);
+    } catch (error) {
+      console.error("Error loading procedure insurance prices:", error);
+    }
+  };
+
+  const getInsurancePrice = (
+    procedureId: string,
+    insuranceCompanyId: string,
+  ) => {
+    const price = procedureInsurancePrices.find(
+      (p) =>
+        p.procedureId === procedureId &&
+        p.insuranceCompanyId === insuranceCompanyId,
+    );
+    return price?.price || 0;
+  };
+
+  const updateAllProceduresForInsurance = () => {
+    if (patientType === "Insurance" && insuranceCompany) {
+      const insuranceCompanyObj = insuranceCompanies.find(
+        (c) => c.name === insuranceCompany,
+      );
+
+      if (insuranceCompanyObj) {
+        setProcedures(
+          procedures.map((procedure) => {
+            if (procedure.templateId) {
+              const template = procedureTemplates.find(
+                (t) => t.id === procedure.templateId,
+              );
+              if (template) {
+                const insurancePrice = getInsurancePrice(
+                  template.id,
+                  insuranceCompanyObj.id,
+                );
+                const price =
+                  insurancePrice > 0 ? insurancePrice : template.cashPrice;
+                const finalAmount = price - (price * procedure.discount) / 100;
+
+                return {
+                  ...procedure,
+                  price: price,
+                  finalAmount: finalAmount,
+                };
+              }
+            }
+            return procedure;
+          }),
+        );
+      }
+    }
+  };
+
   const addProcedure = () => {
     const newId = (procedures.length + 1).toString();
     setProcedures([
@@ -233,10 +316,24 @@ export function PatientForm({
               (t) => t.id === updated.templateId,
             );
             if (template) {
-              const price =
-                patientType === "Cash"
-                  ? template.cashPrice
-                  : template.insurancePrice || template.cashPrice;
+              let price = template.cashPrice;
+
+              // If patient type is Insurance and insurance company is selected, use insurance price
+              if (patientType === "Insurance" && insuranceCompany) {
+                const insuranceCompanyObj = insuranceCompanies.find(
+                  (c) => c.name === insuranceCompany,
+                );
+                if (insuranceCompanyObj) {
+                  const insurancePrice = getInsurancePrice(
+                    template.id,
+                    insuranceCompanyObj.id,
+                  );
+                  if (insurancePrice > 0) {
+                    price = insurancePrice;
+                  }
+                }
+              }
+
               updated.price = price;
               updated.finalAmount = price - (price * Number(value)) / 100;
             }
@@ -251,10 +348,24 @@ export function PatientForm({
   const selectProcedureTemplate = (procedureId: string, templateId: string) => {
     const template = procedureTemplates.find((t) => t.id === templateId);
     if (template) {
-      const price =
-        patientType === "Cash"
-          ? template.cashPrice
-          : template.insurancePrice || template.cashPrice;
+      let price = template.cashPrice;
+
+      // If patient type is Insurance and insurance company is selected, use insurance price
+      if (patientType === "Insurance" && insuranceCompany) {
+        const insuranceCompanyObj = insuranceCompanies.find(
+          (c) => c.name === insuranceCompany,
+        );
+        if (insuranceCompanyObj) {
+          const insurancePrice = getInsurancePrice(
+            template.id,
+            insuranceCompanyObj.id,
+          );
+          if (insurancePrice > 0) {
+            price = insurancePrice;
+          }
+        }
+      }
+
       const procedure = procedures.find((p) => p.id === procedureId);
       const currentDiscount = procedure?.discount || 0;
       const finalAmount = price - (price * currentDiscount) / 100;

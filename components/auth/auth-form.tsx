@@ -70,7 +70,6 @@ export function AuthForm() {
       await setDoc(doc(db, "doctors", email, "doctor_info", "info"), {
         name,
         email,
-        createdAt: new Date(),
       });
 
       toast({

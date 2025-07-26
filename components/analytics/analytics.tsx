@@ -298,11 +298,7 @@ export function AnalyticsPage({
   };
 
   return (
-    <div
-      className={`p-6 space-y-6 transition-all duration-300 ${
-        isSidebarCollapsed ? "ml-0" : ""
-      }`}
-    >
+    <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Analytics Overview</h1>
         <p className="text-gray-600 mt-2">

@@ -16,7 +16,11 @@ import {
 } from "firebase/firestore";
 import { getAuthInstance, getFirestoreInstance } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import type { ProcedureTemplate, InsuranceCompany } from "@/types/patient";
+import type {
+  ProcedureTemplate,
+  InsuranceCompany,
+  ProcedureInsurancePrice,
+} from "@/types/patient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +45,7 @@ import {
   Edit,
   X,
   Check,
+  DollarSign,
 } from "lucide-react";
 import { formatDateForDisplay } from "@/lib/utils";
 
@@ -59,8 +64,12 @@ export function SettingsPage({
   const [insuranceCompanies, setInsuranceCompanies] = useState<
     InsuranceCompany[]
   >([]);
+  const [procedureInsurancePrices, setProcedureInsurancePrices] = useState<
+    ProcedureInsurancePrice[]
+  >([]);
   const [editingProcedure, setEditingProcedure] = useState<string | null>(null);
   const [editingInsurance, setEditingInsurance] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
 
   const procedureFormRef = useRef<HTMLFormElement>(null);
   const insuranceFormRef = useRef<HTMLFormElement>(null);
@@ -71,6 +80,7 @@ export function SettingsPage({
   useEffect(() => {
     loadProcedureTemplates();
     loadInsuranceCompanies();
+    loadProcedureInsurancePrices();
     loadDoctorProfile();
   }, []);
 
@@ -85,12 +95,12 @@ export function SettingsPage({
         const data = docSnap.data();
         setDoctorName(data.name || "");
       } else {
+        // If the document doesn't exist, create it with empty name
         await setDoc(
           docRef,
           {
             name: "",
             email: user.email,
-            createdAt: new Date(),
           },
           { merge: true },
         );
@@ -107,14 +117,13 @@ export function SettingsPage({
       const snapshot = await getDocs(
         collection(db, "doctors", user.email, "procedure_templates"),
       );
-
-      const templates: ProcedureTemplate[] = [];
-      snapshot.forEach((doc) => {
-        templates.push({ id: doc.id, ...doc.data() } as ProcedureTemplate);
-      });
-      setProcedureTemplates(templates);
+      const procedures = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as ProcedureTemplate[];
+      setProcedureTemplates(procedures);
     } catch (error) {
-      // Silent error handling
+      console.error("Error loading procedures:", error);
     }
   };
 
@@ -125,14 +134,30 @@ export function SettingsPage({
       const snapshot = await getDocs(
         collection(db, "doctors", user.email, "insurance_companies"),
       );
-
-      const companies: InsuranceCompany[] = [];
-      snapshot.forEach((doc) => {
-        companies.push({ id: doc.id, ...doc.data() } as InsuranceCompany);
-      });
+      const companies = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as InsuranceCompany[];
       setInsuranceCompanies(companies);
     } catch (error) {
-      // Silent error handling
+      console.error("Error loading insurance companies:", error);
+    }
+  };
+
+  const loadProcedureInsurancePrices = async () => {
+    if (!user?.email) return;
+    try {
+      const db = getFirestoreInstance();
+      const snapshot = await getDocs(
+        collection(db, "doctors", user.email, "procedure_insurance_prices"),
+      );
+      const prices = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as ProcedureInsurancePrice[];
+      setProcedureInsurancePrices(prices);
+    } catch (error) {
+      console.error("Error loading procedure insurance prices:", error);
     }
   };
 
@@ -177,8 +202,7 @@ export function SettingsPage({
         if (!currentPassword || !newPassword || !confirmPassword) {
           toast({
             title: "Error",
-            description:
-              "All password fields are required when changing password.",
+            description: "All password fields are required.",
             variant: "destructive",
           });
           setIsLoading(false);
@@ -188,56 +212,26 @@ export function SettingsPage({
         if (newPassword !== confirmPassword) {
           toast({
             title: "Error",
-            description: "New password and confirm password do not match.",
+            description: "New passwords do not match.",
             variant: "destructive",
           });
           setIsLoading(false);
           return;
         }
 
-        if (newPassword.length < 6) {
-          toast({
-            title: "Error",
-            description: "New password must be at least 6 characters long.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
+        const auth = getAuthInstance();
+        await updatePassword(auth.currentUser!, newPassword);
 
-        try {
-          const auth = getAuthInstance();
-
-          await updatePassword(user, newPassword);
-
-          toast({
-            title: "Profile updated",
-            description:
-              "Your name and password have been updated successfully.",
-          });
-        } catch (error: any) {
-          let errorMessage = "Failed to update password.";
-
-          if (error.code === "auth/wrong-password") {
-            errorMessage = "Current password is incorrect.";
-          } else if (error.code === "auth/weak-password") {
-            errorMessage = "New password is too weak.";
-          }
-
-          toast({
-            title: "Error",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-      } else {
         toast({
-          title: "Profile updated",
-          description: "Your name has been updated successfully.",
+          title: "Password updated",
+          description: "Your password has been updated successfully.",
         });
       }
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
 
       if (profileFormRef.current) {
         profileFormRef.current.reset();
@@ -368,7 +362,7 @@ export function SettingsPage({
 
       toast({
         title: "Insurance company deleted",
-        description: "Insurance company has been removed.",
+        description: "Insurance company has been deleted successfully.",
       });
 
       await loadInsuranceCompanies();
@@ -390,7 +384,6 @@ export function SettingsPage({
 
     const procedureName = formData.get("procedureName") as string;
     const cashPrice = formData.get("cashPrice") as string;
-    const insurancePrice = formData.get("insurancePrice") as string;
 
     if (!procedureName || procedureName.trim() === "") {
       toast({
@@ -428,11 +421,6 @@ export function SettingsPage({
     const procedureData = {
       name: procedureName.trim(),
       cashPrice: Number.parseFloat(cashPrice),
-      insurancePrice:
-        insurancePrice && !isNaN(Number.parseFloat(insurancePrice))
-          ? Number.parseFloat(insurancePrice)
-          : undefined,
-      createdAt: new Date(),
     };
 
     try {
@@ -467,7 +455,6 @@ export function SettingsPage({
     procedureId: string,
     name: string,
     cashPrice: number,
-    insurancePrice?: number,
   ) => {
     if (!user?.email) return;
 
@@ -478,7 +465,6 @@ export function SettingsPage({
         {
           name,
           cashPrice,
-          insurancePrice,
         },
       );
 
@@ -509,7 +495,7 @@ export function SettingsPage({
 
       toast({
         title: "Procedure deleted",
-        description: "Procedure template has been removed.",
+        description: "Procedure template has been deleted successfully.",
       });
 
       await loadProcedureTemplates();
@@ -522,42 +508,114 @@ export function SettingsPage({
     }
   };
 
+  const handleUpdateInsurancePrice = async (
+    procedureId: string,
+    insuranceCompanyId: string,
+    price: number,
+  ) => {
+    if (!user?.email) return;
+
+    try {
+      const db = getFirestoreInstance();
+
+      // Check if price already exists
+      const existingPrice = procedureInsurancePrices.find(
+        (p) =>
+          p.procedureId === procedureId &&
+          p.insuranceCompanyId === insuranceCompanyId,
+      );
+
+      if (existingPrice) {
+        // Update existing price
+        await updateDoc(
+          doc(
+            db,
+            "doctors",
+            user.email,
+            "procedure_insurance_prices",
+            existingPrice.id,
+          ),
+          {
+            price,
+          },
+        );
+      } else {
+        // Create new price
+        const priceData = {
+          procedureId,
+          insuranceCompanyId,
+          price,
+        };
+        await addDoc(
+          collection(db, "doctors", user.email, "procedure_insurance_prices"),
+          priceData,
+        );
+      }
+
+      await loadProcedureInsurancePrices();
+      setEditingPrice(null);
+
+      toast({
+        title: "Price updated",
+        description: "Insurance price has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update insurance price.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getInsurancePrice = (
+    procedureId: string,
+    insuranceCompanyId: string,
+  ) => {
+    const price = procedureInsurancePrices.find(
+      (p) =>
+        p.procedureId === procedureId &&
+        p.insuranceCompanyId === insuranceCompanyId,
+    );
+    return price?.price || 0;
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <div>
+      <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-600 mt-2">
-          Manage your account and practice settings
+          Manage your account and practice settings.
         </p>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="profile" className="flex items-center space-x-2">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            <span>Profile</span>
+            Profile
           </TabsTrigger>
-          <TabsTrigger
-            value="procedures"
-            className="flex items-center space-x-2"
-          >
+          <TabsTrigger value="procedures" className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4" />
-            <span>Procedures</span>
+            Procedures
           </TabsTrigger>
-          <TabsTrigger
-            value="insurance"
-            className="flex items-center space-x-2"
-          >
+          <TabsTrigger value="insurance" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
-            <span>Insurance</span>
+            Insurance Companies
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Pricing Matrix
           </TabsTrigger>
         </TabsList>
 
-        {/* Profile Settings */}
-        <TabsContent value="profile">
+        <TabsContent value="profile" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Doctor Information</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Doctor Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form
@@ -586,8 +644,7 @@ export function SettingsPage({
                     />
                   </div>
                 </div>
-
-                <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">
                       Current Password (Optional)
@@ -599,7 +656,6 @@ export function SettingsPage({
                       placeholder="Enter your current password"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">New Password (Optional)</Label>
                     <Input
@@ -609,7 +665,6 @@ export function SettingsPage({
                       placeholder="Enter your new password"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">
                       Confirm New Password (Optional)
@@ -622,7 +677,6 @@ export function SettingsPage({
                     />
                   </div>
                 </div>
-
                 <Button type="submit" disabled={isLoading}>
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -634,140 +688,100 @@ export function SettingsPage({
           </Card>
         </TabsContent>
 
-        {/* Procedure Templates */}
-        <TabsContent value="procedures">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Procedure Template</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form
-                  ref={procedureFormRef}
-                  onSubmit={handleAddProcedure}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="procedureName">Procedure Name</Label>
-                      <Input
-                        id="procedureName"
-                        name="procedureName"
-                        placeholder="e.g., Dental Cleaning"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cashPrice">Cash Price (SAR)</Label>
-                      <Input
-                        id="cashPrice"
-                        name="cashPrice"
-                        type="number"
-                        step="0.01"
-                        placeholder="100.00"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="insurancePrice">
-                        Insurance Price (SAR)
-                      </Label>
-                      <Input
-                        id="insurancePrice"
-                        name="insurancePrice"
-                        type="number"
-                        step="0.01"
-                        placeholder="80.00"
-                      />
-                    </div>
+        <TabsContent value="procedures" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5" />
+                Procedure Templates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                onSubmit={handleAddProcedure}
+                className="space-y-4 mb-6"
+                ref={procedureFormRef}
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="procedureName">Procedure Name</Label>
+                    <Input
+                      id="procedureName"
+                      name="procedureName"
+                      placeholder="Enter procedure name"
+                      required
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cashPrice">Cash Price (SAR)</Label>
+                    <Input
+                      id="cashPrice"
+                      name="cashPrice"
+                      type="number"
+                      step="0.01"
+                      placeholder="Enter cash price"
+                      required
+                    />
+                  </div>
+                </div>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Procedure
+                </Button>
+              </form>
 
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Procedure
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Procedure Templates</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <div className="space-y-4">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Procedure Name</TableHead>
-                      <TableHead>Cash Price</TableHead>
-                      <TableHead>Insurance Price</TableHead>
+                      <TableHead>Cash Price (SAR)</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {procedureTemplates.map((procedure) => (
-                      <TableRow key={procedure.id} data-id={procedure.id}>
-                        <TableCell className="font-medium">
+                      <TableRow key={procedure.id}>
+                        <TableCell>
                           {editingProcedure === procedure.id ? (
                             <Input
                               defaultValue={procedure.name}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   const target = e.target as HTMLInputElement;
-                                  const name = target.value;
                                   const cashPriceInput =
                                     target.parentElement?.parentElement?.querySelector(
                                       'input[data-field="cashPrice"]',
                                     ) as HTMLInputElement;
-                                  const insurancePriceInput =
-                                    target.parentElement?.parentElement?.querySelector(
-                                      'input[data-field="insurancePrice"]',
-                                    ) as HTMLInputElement;
                                   const cashPrice = parseFloat(
                                     cashPriceInput?.value || "0",
                                   );
-                                  const insurancePrice =
-                                    insurancePriceInput?.value
-                                      ? parseFloat(insurancePriceInput.value)
-                                      : undefined;
                                   handleEditProcedure(
                                     procedure.id,
-                                    name,
+                                    target.value,
                                     cashPrice,
-                                    insurancePrice,
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingProcedure(null);
                                 }
                               }}
                               onBlur={(e) => {
-                                const name = e.target.value;
                                 const cashPriceInput =
                                   e.target.parentElement?.parentElement?.querySelector(
                                     'input[data-field="cashPrice"]',
                                   ) as HTMLInputElement;
-                                const insurancePriceInput =
-                                  e.target.parentElement?.parentElement?.querySelector(
-                                    'input[data-field="insurancePrice"]',
-                                  ) as HTMLInputElement;
                                 const cashPrice = parseFloat(
                                   cashPriceInput?.value || "0",
                                 );
-                                const insurancePrice =
-                                  insurancePriceInput?.value
-                                    ? parseFloat(insurancePriceInput.value)
-                                    : undefined;
                                 handleEditProcedure(
                                   procedure.id,
-                                  name,
+                                  e.target.value,
                                   cashPrice,
-                                  insurancePrice,
                                 );
                               }}
-                              autoFocus
                             />
                           ) : (
                             procedure.name
@@ -776,37 +790,38 @@ export function SettingsPage({
                         <TableCell>
                           {editingProcedure === procedure.id ? (
                             <Input
+                              data-field="cashPrice"
                               type="number"
                               step="0.01"
                               defaultValue={procedure.cashPrice}
-                              data-field="cashPrice"
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   const target = e.target as HTMLInputElement;
-                                  const cashPrice = parseFloat(target.value);
                                   const nameInput =
                                     target.parentElement?.parentElement?.querySelector(
                                       "input",
                                     ) as HTMLInputElement;
-                                  const insurancePriceInput =
-                                    target.parentElement?.parentElement?.querySelector(
-                                      'input[data-field="insurancePrice"]',
-                                    ) as HTMLInputElement;
-                                  const name =
-                                    nameInput?.value || procedure.name;
-                                  const insurancePrice =
-                                    insurancePriceInput?.value
-                                      ? parseFloat(insurancePriceInput.value)
-                                      : undefined;
                                   handleEditProcedure(
                                     procedure.id,
-                                    name,
-                                    cashPrice,
-                                    insurancePrice,
+                                    nameInput?.value || procedure.name,
+                                    parseFloat(target.value),
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingProcedure(null);
                                 }
+                              }}
+                              onBlur={(e) => {
+                                const target = e.target as HTMLInputElement;
+                                const nameInput =
+                                  target.parentElement?.parentElement?.querySelector(
+                                    "input",
+                                  ) as HTMLInputElement;
+                                const name = nameInput?.value || procedure.name;
+                                handleEditProcedure(
+                                  procedure.id,
+                                  name,
+                                  parseFloat(target.value),
+                                );
                               }}
                             />
                           ) : (
@@ -814,56 +829,12 @@ export function SettingsPage({
                           )}
                         </TableCell>
                         <TableCell>
-                          {editingProcedure === procedure.id ? (
-                            <Input
-                              type="number"
-                              step="0.01"
-                              defaultValue={procedure.insurancePrice || ""}
-                              data-field="insurancePrice"
-                              placeholder="Optional"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  const target = e.target as HTMLInputElement;
-                                  const insurancePrice = target.value
-                                    ? parseFloat(target.value)
-                                    : undefined;
-                                  const nameInput =
-                                    target.parentElement?.parentElement?.querySelector(
-                                      "input",
-                                    ) as HTMLInputElement;
-                                  const cashPriceInput =
-                                    target.parentElement?.parentElement?.querySelector(
-                                      'input[data-field="cashPrice"]',
-                                    ) as HTMLInputElement;
-                                  const name =
-                                    nameInput?.value || procedure.name;
-                                  const cashPrice = parseFloat(
-                                    cashPriceInput?.value || "0",
-                                  );
-                                  handleEditProcedure(
-                                    procedure.id,
-                                    name,
-                                    cashPrice,
-                                    insurancePrice,
-                                  );
-                                } else if (e.key === "Escape") {
-                                  setEditingProcedure(null);
-                                }
-                              }}
-                            />
-                          ) : procedure.insurancePrice ? (
-                            `SAR ${procedure.insurancePrice.toFixed(2)}`
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
+                          <div className="flex items-center gap-2">
                             {editingProcedure === procedure.id ? (
                               <>
                                 <Button
-                                  variant="outline"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() => {
                                     const nameInput = document.querySelector(
                                       `tr[data-id="${procedure.id}"] input`,
@@ -872,32 +843,23 @@ export function SettingsPage({
                                       document.querySelector(
                                         `tr[data-id="${procedure.id}"] input[data-field="cashPrice"]`,
                                       ) as HTMLInputElement;
-                                    const insurancePriceInput =
-                                      document.querySelector(
-                                        `tr[data-id="${procedure.id}"] input[data-field="insurancePrice"]`,
-                                      ) as HTMLInputElement;
                                     const name =
                                       nameInput?.value || procedure.name;
                                     const cashPrice = parseFloat(
                                       cashPriceInput?.value || "0",
                                     );
-                                    const insurancePrice =
-                                      insurancePriceInput?.value
-                                        ? parseFloat(insurancePriceInput.value)
-                                        : undefined;
                                     handleEditProcedure(
                                       procedure.id,
                                       name,
                                       cashPrice,
-                                      insurancePrice,
                                     );
                                   }}
                                 >
                                   <Check className="h-4 w-4" />
                                 </Button>
                                 <Button
-                                  variant="outline"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() => setEditingProcedure(null)}
                                 >
                                   <X className="h-4 w-4" />
@@ -906,8 +868,8 @@ export function SettingsPage({
                             ) : (
                               <>
                                 <Button
-                                  variant="outline"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() =>
                                     setEditingProcedure(procedure.id)
                                   }
@@ -915,8 +877,8 @@ export function SettingsPage({
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
-                                  variant="destructive"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() =>
                                     handleDeleteProcedure(procedure.id)
                                   }
@@ -931,50 +893,46 @@ export function SettingsPage({
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Insurance Companies */}
-        <TabsContent value="insurance">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add Insurance Company</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form
-                  ref={insuranceFormRef}
-                  onSubmit={handleAddInsuranceCompany}
-                  className="space-y-4"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
+        <TabsContent value="insurance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Insurance Companies
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                onSubmit={handleAddInsuranceCompany}
+                className="space-y-4 mb-6"
+                ref={insuranceFormRef}
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <div className="flex gap-2">
                     <Input
                       id="companyName"
                       name="companyName"
-                      placeholder="e.g., Bupa Arabia"
+                      placeholder="Enter insurance company name"
                       required
                     />
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Company
+                    </Button>
                   </div>
+                </div>
+              </form>
 
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Company
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Insurance Companies</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <div className="space-y-4">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -984,17 +942,16 @@ export function SettingsPage({
                   </TableHeader>
                   <TableBody>
                     {insuranceCompanies.map((company) => (
-                      <TableRow key={company.id} data-id={company.id}>
-                        <TableCell className="font-medium">
+                      <TableRow key={company.id}>
+                        <TableCell>
                           {editingInsurance === company.id ? (
                             <Input
                               defaultValue={company.name}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
-                                  const target = e.target as HTMLInputElement;
                                   handleEditInsuranceCompany(
                                     company.id,
-                                    target.value,
+                                    e.target.value,
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingInsurance(null);
@@ -1006,19 +963,18 @@ export function SettingsPage({
                                   e.target.value,
                                 );
                               }}
-                              autoFocus
                             />
                           ) : (
                             company.name
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-1">
+                          <div className="flex items-center gap-2">
                             {editingInsurance === company.id ? (
                               <>
                                 <Button
-                                  variant="outline"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() => {
                                     const nameInput = document.querySelector(
                                       `tr[data-id="${company.id}"] input`,
@@ -1032,8 +988,8 @@ export function SettingsPage({
                                   <Check className="h-4 w-4" />
                                 </Button>
                                 <Button
-                                  variant="outline"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() => setEditingInsurance(null)}
                                 >
                                   <X className="h-4 w-4" />
@@ -1042,8 +998,8 @@ export function SettingsPage({
                             ) : (
                               <>
                                 <Button
-                                  variant="outline"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() =>
                                     setEditingInsurance(company.id)
                                   }
@@ -1051,8 +1007,8 @@ export function SettingsPage({
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
-                                  variant="destructive"
                                   size="sm"
+                                  variant="outline"
                                   onClick={() =>
                                     handleDeleteInsuranceCompany(company.id)
                                   }
@@ -1067,9 +1023,120 @@ export function SettingsPage({
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Insurance Pricing Matrix
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Set different prices for each procedure with each insurance
+                company. Cash prices are set in the Procedures tab.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {procedureTemplates.length === 0 ||
+              insuranceCompanies.length === 0 ? (
+                <div className="text-center py-8">
+                  <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Data Available
+                  </h3>
+                  <p className="text-gray-600">
+                    {procedureTemplates.length === 0 &&
+                    insuranceCompanies.length === 0
+                      ? "Please add procedures and insurance companies first."
+                      : procedureTemplates.length === 0
+                        ? "Please add procedures first."
+                        : "Please add insurance companies first."}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Procedure</TableHead>
+                        <TableHead>Cash Price</TableHead>
+                        {insuranceCompanies.map((company) => (
+                          <TableHead key={company.id}>{company.name}</TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {procedureTemplates.map((procedure) => (
+                        <TableRow key={procedure.id}>
+                          <TableCell className="font-medium">
+                            {procedure.name}
+                          </TableCell>
+                          <TableCell className="text-green-600 font-medium">
+                            SAR {procedure.cashPrice.toFixed(2)}
+                          </TableCell>
+                          {insuranceCompanies.map((company) => {
+                            const currentPrice = getInsurancePrice(
+                              procedure.id,
+                              company.id,
+                            );
+                            const priceKey = `${procedure.id}-${company.id}`;
+
+                            return (
+                              <TableCell key={company.id}>
+                                {editingPrice === priceKey ? (
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    defaultValue={currentPrice}
+                                    className="w-20"
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        handleUpdateInsurancePrice(
+                                          procedure.id,
+                                          company.id,
+                                          parseFloat(e.target.value),
+                                        );
+                                      } else if (e.key === "Escape") {
+                                        setEditingPrice(null);
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      handleUpdateInsurancePrice(
+                                        procedure.id,
+                                        company.id,
+                                        parseFloat(e.target.value),
+                                      );
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-blue-600">
+                                      SAR {currentPrice.toFixed(2)}
+                                    </span>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => setEditingPrice(priceKey)}
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -25,18 +25,22 @@ export interface ProcedureItem {
 export interface DoctorInfo {
   name: string;
   email: string;
-  createdAt: Date;
 }
 
 export interface ProcedureTemplate {
   id: string;
   name: string;
   cashPrice: number;
-  insurancePrice?: number;
-  insuranceCompanies?: string[];
 }
 
 export interface InsuranceCompany {
   id: string;
   name: string;
+}
+
+export interface ProcedureInsurancePrice {
+  id: string;
+  procedureId: string;
+  insuranceCompanyId: string;
+  price: number;
 }
