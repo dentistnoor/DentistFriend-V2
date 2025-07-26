@@ -64,7 +64,7 @@ export function Sidebar({
       if (!user?.email) return;
       try {
         const db = getFirestoreInstance();
-        const docRef = doc(db, "doctors", user.email);
+        const docRef = doc(db, "doctors", user.email, "doctor_info", "info");
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {

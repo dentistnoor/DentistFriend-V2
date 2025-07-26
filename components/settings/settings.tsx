@@ -78,7 +78,7 @@ export function SettingsPage({
     if (!user?.email) return;
     try {
       const db = getFirestoreInstance();
-      const docRef = doc(db, "doctors", user.email);
+      const docRef = doc(db, "doctors", user.email, "doctor_info", "info");
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -163,7 +163,7 @@ export function SettingsPage({
     try {
       const db = getFirestoreInstance();
       await setDoc(
-        doc(db, "doctors", user.email),
+        doc(db, "doctors", user.email, "doctor_info", "info"),
         {
           name: name.trim(),
           email: user.email,

@@ -7,7 +7,7 @@ DentistFriend is a modern dental practice management solution designed specifica
 ### Key Features
 
 - **Patient Management**: Register patients, manage records, and track procedures with comprehensive treatment history
-- **Financial Tracking**: Monitor cash and insurance payments with detailed revenue analytics  
+- **Financial Tracking**: Monitor cash and insurance payments with detailed revenue analytics
 - **Procedure Management**: Automated pricing from Excel sheets with support for multiple insurance providers
 - **Analytics Dashboard**: Visual insights into practice performance with interactive charts and statistics
 
