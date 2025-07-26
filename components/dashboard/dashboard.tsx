@@ -28,11 +28,9 @@ import { formatDateForDisplay } from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input";
 import { useToast } from "@/hooks/use-toast";
 
-interface DashboardProps {
-  isSidebarCollapsed?: boolean;
-}
+interface DashboardProps {}
 
-export function Dashboard({ isSidebarCollapsed = false }: DashboardProps) {
+export function Dashboard({}: DashboardProps) {
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientRecord[]>([]);
   const [showForm, setShowForm] = useState(false);

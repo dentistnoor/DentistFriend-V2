@@ -137,9 +137,7 @@ export function PatientForm({
       setRemarks(patient.remarks || "");
       setPatientType(patient.type);
 
-      // Map procedures to include templateId by matching procedure names
       const mappedProcedures = patient.procedures?.map((p) => {
-        // Find matching template by name
         const matchingTemplate = procedureTemplates.find(
           (template) => template.name.toLowerCase() === p.name.toLowerCase(),
         );
@@ -147,7 +145,6 @@ export function PatientForm({
         return {
           ...p,
           templateId: matchingTemplate?.id || "",
-          // If no matching template found, keep the original name for display
           name: matchingTemplate ? matchingTemplate.name : p.name,
         };
       }) || [
@@ -175,14 +172,12 @@ export function PatientForm({
     }
   }, [open]);
 
-  // Load patient data after procedure templates are loaded
   useEffect(() => {
     if (open && procedureTemplates.length > 0) {
       loadPatientData();
     }
   }, [open, patient, procedureTemplates]);
 
-  // Update procedures when insurance company or patient type changes
   useEffect(() => {
     if (open && procedures.length > 0) {
       updateAllProceduresForInsurance();
@@ -309,7 +304,7 @@ export function PatientForm({
       price: 0,
       discount: 0,
       finalAmount: 0,
-      templateId: "", // Empty templateId means it will show as dropdown for new procedures
+      templateId: "",
     };
     setProcedures([...procedures, newProcedure]);
   };
@@ -325,92 +320,61 @@ export function PatientForm({
     field: keyof ProcedureItem,
     value: string | number,
   ) => {
-    setProcedures(
-      procedures.map((p) => {
-        if (p.id === id) {
-          const updated = { ...p, [field]: value };
-          if (field === "discount") {
-            // Calculate final amount based on the procedure template price and discount
-            const template = procedureTemplates.find(
-              (t) => t.id === updated.templateId,
-            );
-            if (template) {
-              let price = template.cashPrice;
+    setProcedures((prev) =>
+      prev.map((procedure) => {
+        if (procedure.id === id) {
+          const updatedProcedure = { ...procedure, [field]: value };
 
-              // If patient type is Insurance and insurance company is selected, use insurance price
-              if (patientType === "Insurance" && insuranceCompany) {
-                const insuranceCompanyObj = insuranceCompanies.find(
-                  (c) => c.name === insuranceCompany,
-                );
-                if (insuranceCompanyObj) {
-                  const insurancePrice = getInsurancePrice(
-                    template.id,
-                    insuranceCompanyObj.id,
-                  );
-                  if (insurancePrice > 0) {
-                    price = insurancePrice;
-                  }
-                }
-              }
-
-              updated.price = price;
-              updated.finalAmount = price - (price * Number(value)) / 100;
-            }
+          if (field === "discount" || field === "price") {
+            const discount =
+              field === "discount" ? Number(value) : procedure.discount;
+            const price = field === "price" ? Number(value) : procedure.price;
+            const finalAmount = price - (price * discount) / 100;
+            updatedProcedure.finalAmount = finalAmount;
           }
-          return updated;
+
+          return updatedProcedure;
         }
-        return p;
+        return procedure;
       }),
     );
   };
 
   const selectProcedureTemplate = (procedureId: string, templateId: string) => {
     const template = procedureTemplates.find((t) => t.id === templateId);
-    if (template) {
-      let price = template.cashPrice;
+    if (!template) return;
 
-      // If patient type is Insurance and insurance company is selected, use insurance price
-      if (patientType === "Insurance" && insuranceCompany) {
-        const insuranceCompanyObj = insuranceCompanies.find(
-          (c) => c.name === insuranceCompany,
+    let price = template.cashPrice;
+
+    if (patientType === "Insurance" && insuranceCompany) {
+      const insuranceCompanyObj = insuranceCompanies.find(
+        (c) => c.name === insuranceCompany,
+      );
+      if (insuranceCompanyObj) {
+        const insurancePrice = getInsurancePrice(
+          template.id,
+          insuranceCompanyObj.id,
         );
-        if (insuranceCompanyObj) {
-          const insurancePrice = getInsurancePrice(
-            template.id,
-            insuranceCompanyObj.id,
-          );
-          if (insurancePrice > 0) {
-            price = insurancePrice;
-          }
+        if (insurancePrice > 0) {
+          price = insurancePrice;
         }
       }
-
-      const procedure = procedures.find((p) => p.id === procedureId);
-      const currentDiscount = procedure?.discount || 0;
-      const finalAmount = price - (price * currentDiscount) / 100;
-
-      setProcedures(
-        procedures.map((p) => {
-          if (p.id === procedureId) {
-            const updated = {
-              ...p,
-              name: template.name,
-              price: price,
-              finalAmount: finalAmount,
-              templateId: templateId, // Store the selected template ID
-            };
-            return updated;
-          }
-          return p;
-        }),
-      );
-    } else {
-      toast({
-        title: "Error",
-        description: "Template not found for ID: " + templateId,
-        variant: "destructive",
-      });
     }
+
+    setProcedures((prev) =>
+      prev.map((procedure) => {
+        if (procedure.id === procedureId) {
+          return {
+            ...procedure,
+            name: template.name,
+            price: price,
+            finalAmount: price - (price * procedure.discount) / 100,
+            templateId: templateId,
+          };
+        }
+        return procedure;
+      }),
+    );
   };
 
   const calculateTotalAmount = () => {
@@ -495,22 +459,6 @@ export function PatientForm({
     try {
       const db = getFirestoreInstance();
 
-      // Test if we can read from the collection to check permissions
-      try {
-        const testSnapshot = await getDocs(
-          collection(db, "doctors", user.email, "patient_info"),
-        );
-      } catch (readError) {
-        toast({
-          title: "Permission Error",
-          description:
-            "Cannot access patient records. Please check your Firebase permissions.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       if (patient) {
         const patientRef = doc(
           db,
@@ -525,7 +473,7 @@ export function PatientForm({
           description: "Patient record has been updated successfully.",
         });
       } else {
-        const docRef = await addDoc(
+        await addDoc(
           collection(db, "doctors", user.email, "patient_info"),
           patientData,
         );
@@ -533,7 +481,6 @@ export function PatientForm({
           title: "Patient added",
           description: "New patient record has been created successfully.",
         });
-        // Reset form after successful submission for new patients
         resetForm();
       }
 
@@ -552,7 +499,6 @@ export function PatientForm({
 
   const handleDialogClose = (open: boolean) => {
     if (!open && !patient) {
-      // Reset form when closing dialog for new patients
       resetForm();
     }
     onOpenChange(open);

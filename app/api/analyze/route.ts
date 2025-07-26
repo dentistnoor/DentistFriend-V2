@@ -5,7 +5,6 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if API key is configured
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         { error: "GEMINI_API_KEY is not configured" },
@@ -16,20 +15,11 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const files = [];
 
-    // Extract all files from formData
-    console.log("FormData entries received:", Array.from(formData.entries()));
-
     for (const [key, value] of formData.entries()) {
-      console.log(`Processing entry: ${key}`, value);
       if (key.startsWith("file") && value instanceof File) {
-        console.log(
-          `Adding file: ${value.name}, size: ${value.size}, type: ${value.type}`,
-        );
         files.push(value);
       }
     }
-
-    console.log(`Total files found: ${files.length}`);
 
     if (files.length === 0) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
@@ -40,7 +30,6 @@ export async function POST(request: NextRequest) {
 
     for (const file of files) {
       try {
-        console.log(`Processing file: ${file.name}`);
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
@@ -130,8 +119,6 @@ Return only valid JSON.`;
           }
         } catch (parseError) {
           console.error("Error parsing JSON from Gemini response:", parseError);
-          console.log("Raw response:", text);
-          // Continue with other files even if one fails
         }
       } catch (fileError) {
         console.error(`Error processing file ${file.name}:`, fileError);

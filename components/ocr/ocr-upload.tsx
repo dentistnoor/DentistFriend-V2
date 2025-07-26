@@ -30,9 +30,7 @@ interface FileWithPreview extends File {
   preview?: string;
 }
 
-interface OCRUploadPageProps {
-  isSidebarCollapsed?: boolean;
-}
+interface OCRUploadPageProps {}
 
 interface PatientOCRRecord {
   name: string;
@@ -43,9 +41,7 @@ interface PatientOCRRecord {
   visitDate?: string;
 }
 
-export function OCRUploadPage({
-  isSidebarCollapsed = false,
-}: OCRUploadPageProps) {
+export function OCRUploadPage({}: OCRUploadPageProps) {
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -67,23 +63,17 @@ export function OCRUploadPage({
     "Finalizing extraction...",
   ];
 
-  // Convert date from DD/MM/YYYY to YYYY-MM-DD for database storage
   const convertDateFormat = (dateString: string): string => {
-    if (dateString.includes("/")) {
-      const parts = dateString.split("/");
-      if (parts.length === 3) {
-        const day = parts[0];
-        const month = parts[1];
-        const year = parts[2];
-        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-      }
+    if (!dateString) return new Date().toISOString().split("T")[0];
+    const [day, month, year] = dateString.split("/");
+    if (day && month && year) {
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     }
-    return dateString;
+    return new Date().toISOString().split("T")[0];
   };
 
-  // Capitalize first letter of each word in procedure
   const capitalizeProcedure = (procedure: string): string => {
-    if (!procedure) return "Not specified";
+    if (!procedure) return "";
     return procedure
       .split(" ")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -92,16 +82,15 @@ export function OCRUploadPage({
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
-    console.log("Selected files:", files);
-    const newFiles: FileWithPreview[] = Array.from(files).map((file) => {
-      console.log("Processing file:", file.name, file.size, file.type);
-      const fileWithId = Object.assign(file, {
-        id: Math.random().toString(36).substr(2, 9),
-      }) as FileWithPreview;
 
-      return fileWithId;
+    const newFiles: FileWithPreview[] = Array.from(files).map((file) => {
+      const fileWithPreview = Object.assign(file, {
+        id: Math.random().toString(36).substr(2, 9),
+        preview: URL.createObjectURL(file),
+      });
+      return fileWithPreview;
     });
-    console.log("New files array:", newFiles);
+
     setSelectedFiles((prev) => [...prev, ...newFiles]);
   };
 
@@ -143,37 +132,36 @@ export function OCRUploadPage({
     setProgress(0);
 
     try {
-      // Start progress updates
-      setProgressMessage(progressMessages[0]);
       setProgress(10);
+      setProgressMessage(progressMessages[0]);
 
       const formData = new FormData();
       selectedFiles.forEach((file, idx) => {
-        console.log(`Appending file ${idx}:`, file.name, file.size, file.type);
         formData.append(`file${idx}`, file, file.name);
       });
 
-      console.log("FormData entries:", Array.from(formData.entries()));
-
-      // Simulate dynamic progress for file preparation
-      for (let i = 10; i <= 25; i += 3) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        setProgress(i);
-        if (i === 15) setProgressMessage(progressMessages[1]);
-      }
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) return prev;
+          const nextProgress = prev + Math.random() * 15 + 5;
+          const messageIndex = Math.floor(
+            (nextProgress / 100) * progressMessages.length,
+          );
+          setProgressMessage(
+            progressMessages[
+              Math.min(messageIndex, progressMessages.length - 1)
+            ],
+          );
+          return Math.min(Math.round(nextProgress), 90);
+        });
+      }, 300);
 
       const response = await fetch("/api/analyze", {
         method: "POST",
         body: formData,
       });
 
-      // Simulate dynamic progress for API processing
-      for (let i = 25; i <= 60; i += 5) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        setProgress(i);
-        if (i === 35) setProgressMessage(progressMessages[2]);
-        if (i === 45) setProgressMessage(progressMessages[3]);
-      }
+      clearInterval(progressInterval);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -182,38 +170,27 @@ export function OCRUploadPage({
 
       const data = await response.json();
 
-      // Simulate dynamic progress for data processing
-      for (let i = 60; i <= 90; i += 5) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        setProgress(i);
-        if (i === 70) setProgressMessage(progressMessages[4]);
-      }
-
       if (data.records && Array.isArray(data.records)) {
-        setResults(data.records);
+        setProgress(100);
+        setProgressMessage(progressMessages[progressMessages.length - 1]);
+
+        setTimeout(() => {
+          setResults(data.records);
+          setIsAnalyzing(false);
+          setProgress(0);
+          setProgressMessage("");
+        }, 500);
       } else {
         throw new Error("Invalid response format");
       }
-
-      // Final progress update
-      setProgressMessage(progressMessages[5]);
-      for (let i = 90; i <= 100; i += 2) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        setProgress(i);
-      }
-
-      // Small delay to show completion
-      setTimeout(() => {
-        setProgress(0);
-        setProgressMessage("");
-      }, 1000);
     } catch (err) {
       console.error("OCR Error:", err);
       alert(
         `OCR failed: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
-    } finally {
       setIsAnalyzing(false);
+      setProgress(0);
+      setProgressMessage("");
     }
   };
 
@@ -246,10 +223,10 @@ export function OCRUploadPage({
             : new Date().toISOString().split("T")[0],
           patientName: record.name,
           fileNumber: record.file_number,
-          age: "", // Not available from OCR
-          gender: record.gender === "Male" ? "M" : "F", // Convert to single character
-          type: "Cash", // Default, can be edited later
-          insuranceCompany: "", // Removed nationality
+          age: "",
+          gender: record.gender === "Male" ? "M" : "F",
+          type: "Cash",
+          insuranceCompany: "",
           procedures: [
             {
               id: Math.random().toString(36).substr(2, 9),
@@ -330,7 +307,6 @@ export function OCRUploadPage({
             accept="image/*,application/pdf"
             className="hidden"
             onChange={(e) => {
-              console.log("File input change event:", e.target.files);
               handleFileSelect(e.target.files);
             }}
           />
@@ -378,39 +354,37 @@ export function OCRUploadPage({
               </div>
             </div>
           )}
+
+          {/* Analyze Button */}
+          {selectedFiles.length > 0 && (
+            <div className="space-y-4">
+              <Button
+                onClick={analyzeFiles}
+                disabled={isAnalyzing}
+                className="w-full"
+                size="lg"
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="mr-2 h-4 w-4" />
+                )}
+                {isAnalyzing ? "Analyzing Records..." : "Analyze Records"}
+              </Button>
+
+              {isAnalyzing && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>{progressMessage}</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="w-full" />
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Analyze Button Section */}
-      {selectedFiles.length > 0 && (
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <Button
-              onClick={analyzeFiles}
-              disabled={isAnalyzing}
-              className="w-full"
-              size="lg"
-            >
-              {isAnalyzing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Zap className="mr-2 h-4 w-4" />
-              )}
-              {isAnalyzing ? "Analyzing Records..." : "Analyze Records"}
-            </Button>
-
-            {isAnalyzing && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>{progressMessage}</span>
-                  <span>{progress}%</span>
-                </div>
-                <Progress value={progress} className="w-full" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* OCR Results - Patient by Patient View */}
       {results.length > 0 && (

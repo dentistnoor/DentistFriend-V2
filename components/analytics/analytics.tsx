@@ -31,13 +31,9 @@ import { Users, DollarSign, CreditCard, FileText, Wallet } from "lucide-react";
 import { formatDateForDisplay, formatGender } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-interface AnalyticsPageProps {
-  isSidebarCollapsed?: boolean;
-}
+interface AnalyticsPageProps {}
 
-export function AnalyticsPage({
-  isSidebarCollapsed = false,
-}: AnalyticsPageProps) {
+export function AnalyticsPage({}: AnalyticsPageProps) {
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientRecord[]>([]);
   const [dateFilter, setDateFilter] = useState("all");
@@ -134,27 +130,25 @@ export function AnalyticsPage({
     setFilteredPatients(filtered);
   }, [patients, dateFilter, customDateRange]);
 
-  // Calculate metrics
   const totalPatients = filteredPatients.length;
   const cashPatients = filteredPatients.filter((p) => p.type === "Cash").length;
   const insurancePatients = filteredPatients.filter(
     (p) => p.type === "Insurance",
   ).length;
-  const totalRevenue = filteredPatients.reduce(
-    (sum, patient) => sum + patient.totalAmount,
+  const totalCollection = filteredPatients.reduce(
+    (sum, p) => sum + p.totalAmount,
     0,
   );
-  const cashRevenue = filteredPatients
+  const cashCollection = filteredPatients
     .filter((p) => p.type === "Cash")
-    .reduce((sum, patient) => sum + patient.totalAmount, 0);
-  const insuranceRevenue = filteredPatients
+    .reduce((sum, p) => sum + p.totalAmount, 0);
+  const insuranceCollection = filteredPatients
     .filter((p) => p.type === "Insurance")
-    .reduce((sum, patient) => sum + patient.totalAmount, 0);
+    .reduce((sum, p) => sum + p.totalAmount, 0);
 
-  // Chart data
   const patientTypeData = [
     ...(cashPatients > 0
-      ? [{ name: "Cash", value: cashPatients, color: "#f97316" }]
+      ? [{ name: "Cash", value: cashPatients, color: "#f59e0b" }]
       : []),
     ...(insurancePatients > 0
       ? [{ name: "Insurance", value: insurancePatients, color: "#8b5cf6" }]
@@ -227,7 +221,6 @@ export function AnalyticsPage({
     },
   ];
 
-  // Revenue Trend Data
   const revenueTrendData = filteredPatients
     .reduce(
       (acc, patient) => {
@@ -244,7 +237,6 @@ export function AnalyticsPage({
       [] as { date: string; revenue: number; patients: number }[],
     )
     .sort((a, b) => {
-      // Convert DD/MM/YYYY to Date object for proper sorting
       const [dayA, monthA, yearA] = a.date.split("/");
       const [dayB, monthB, yearB] = b.date.split("/");
       const dateA = new Date(
@@ -259,7 +251,7 @@ export function AnalyticsPage({
       );
       return dateA.getTime() - dateB.getTime();
     })
-    .slice(-10); // Last 10 days
+    .slice(-10);
 
   const procedureData = filteredPatients
     .flatMap((p) => p.procedures)
@@ -481,7 +473,7 @@ export function AnalyticsPage({
                   Total Collection
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  SAR {totalRevenue.toFixed(2)}
+                  SAR {totalCollection.toFixed(2)}
                 </p>
               </div>
               <div className="p-2 bg-green-100 rounded-lg">
@@ -499,7 +491,7 @@ export function AnalyticsPage({
                   Cash Collection
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  SAR {cashRevenue.toFixed(2)}
+                  SAR {cashCollection.toFixed(2)}
                 </p>
               </div>
               <div className="p-2 bg-orange-100 rounded-lg">
@@ -517,7 +509,7 @@ export function AnalyticsPage({
                   Insurance Collection
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  SAR {insuranceRevenue.toFixed(2)}
+                  SAR {insuranceCollection.toFixed(2)}
                 </p>
               </div>
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -539,7 +531,7 @@ export function AnalyticsPage({
             {patientTypeData.length > 0 ? (
               <ChartContainer
                 config={{
-                  cash: { label: "Cash", color: "#f97316" },
+                  cash: { label: "Cash", color: "#f59e0b" },
                   insurance: { label: "Insurance", color: "#8b5cf6" },
                 }}
                 className="w-full h-full"

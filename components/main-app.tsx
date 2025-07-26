@@ -14,15 +14,15 @@ export function MainApp() {
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return <Dashboard isSidebarCollapsed={isSidebarCollapsed} />;
+        return <Dashboard />;
       case "analytics":
-        return <AnalyticsPage isSidebarCollapsed={isSidebarCollapsed} />;
+        return <AnalyticsPage />;
       case "ocr-upload":
-        return <OCRUploadPage isSidebarCollapsed={isSidebarCollapsed} />;
+        return <OCRUploadPage />;
       case "settings":
-        return <SettingsPage isSidebarCollapsed={isSidebarCollapsed} />;
+        return <SettingsPage />;
       default:
-        return <Dashboard isSidebarCollapsed={isSidebarCollapsed} />;
+        return <Dashboard />;
     }
   };
 

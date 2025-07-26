@@ -49,13 +49,9 @@ import {
 } from "lucide-react";
 import { formatDateForDisplay } from "@/lib/utils";
 
-interface SettingsPageProps {
-  isSidebarCollapsed?: boolean;
-}
+interface SettingsPageProps {}
 
-export function SettingsPage({
-  isSidebarCollapsed = false,
-}: SettingsPageProps) {
+export function SettingsPage({}: SettingsPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [doctorName, setDoctorName] = useState("");
   const [procedureTemplates, setProcedureTemplates] = useState<

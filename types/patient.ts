@@ -10,7 +10,7 @@ export interface PatientRecord {
   procedures: ProcedureItem[];
   totalAmount: number;
   remarks?: string;
-  createdAt: any; // Firestore timestamp
+  createdAt: any;
 }
 
 export interface ProcedureItem {
