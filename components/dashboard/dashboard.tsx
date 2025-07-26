@@ -24,7 +24,7 @@ import {
 import { PatientTable } from "./patient-table";
 import { PatientForm } from "./patient-form";
 import { Plus, Search, Filter, Download } from "lucide-react";
-import { formatDateForDisplay } from "@/lib/utils";
+import { formatDateForDisplay, formatGender } from "@/lib/utils";
 import { DateInput } from "@/components/ui/date-input";
 import { useToast } from "@/hooks/use-toast";
 
@@ -204,7 +204,7 @@ export function Dashboard({}: DashboardProps) {
           `"${patient.patientName}"`,
           patient.fileNumber,
           patient.age,
-          patient.gender,
+          formatGender(patient.gender),
           patient.type,
           patient.insuranceCompany || "",
           `"${patient.procedures.map((p) => p.name).join("; ")}"`,
