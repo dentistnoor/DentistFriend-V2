@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { deleteDoc, doc } from "firebase/firestore";
 import { getFirestoreInstance } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -46,6 +46,11 @@ export function PatientTable({
   const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Reset to first page when patients array changes (due to filtering)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [patients]);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(patients.length / itemsPerPage);

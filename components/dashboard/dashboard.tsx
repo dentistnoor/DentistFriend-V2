@@ -38,7 +38,7 @@ export function Dashboard({}: DashboardProps) {
     PatientRecord | undefined
   >();
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
   const [customDateRange, setCustomDateRange] = useState({
     start: "",
     end: "",
@@ -93,7 +93,8 @@ export function Dashboard({}: DashboardProps) {
       case "today":
         filtered = filtered.filter((patient) => {
           const visitDate = new Date(patient.visitDate);
-          return visitDate >= today;
+          const visitDateOnly = new Date(visitDate.getFullYear(), visitDate.getMonth(), visitDate.getDate());
+          return visitDateOnly.getTime() === today.getTime();
         });
         break;
       case "last7days":
@@ -283,8 +284,8 @@ export function Dashboard({}: DashboardProps) {
                   <SelectValue placeholder="Filter by date" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
                   <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
                   <SelectItem value="last7days">Last 7 Days</SelectItem>
                   <SelectItem value="last30days">Last 30 Days</SelectItem>
                   <SelectItem value="last3months">Last 3 Months</SelectItem>
@@ -334,6 +335,7 @@ export function Dashboard({}: DashboardProps) {
             patients={filteredPatients}
             onEdit={handleEditPatient}
             onDelete={handleFormSuccess}
+            key={`patient-table-${filteredPatients.length}`}
           />
         </CardContent>
       </Card>
