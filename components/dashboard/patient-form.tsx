@@ -335,6 +335,10 @@ export function PatientForm({
             const price = field === "price" ? Number(value) : procedure.price;
             const finalAmount = price - (price * discount) / 100;
             updatedProcedure.finalAmount = finalAmount;
+          } else if (field === "finalAmount") {
+            // When final amount is manually edited, we don't recalculate it
+            // The user's input is preserved
+            updatedProcedure.finalAmount = Number(value);
           }
 
           return updatedProcedure;
@@ -736,8 +740,14 @@ export function PatientForm({
                         type="number"
                         step="0.01"
                         value={procedure.finalAmount.toFixed(2)}
-                        readOnly
-                        className="bg-gray-50"
+                        onChange={(e) =>
+                          updateProcedure(
+                            procedure.id,
+                            "finalAmount",
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
+                        className="bg-white"
                         tabIndex={procedureTabIndex + 2}
                       />
                     </div>
