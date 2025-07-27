@@ -20,6 +20,7 @@ interface DateInputProps {
   className?: string;
   required?: boolean;
   name?: string;
+  tabIndex?: number;
 }
 
 export function DateInput({
@@ -29,6 +30,7 @@ export function DateInput({
   className,
   required,
   name,
+  tabIndex,
 }: DateInputProps) {
   const [date, setDate] = React.useState<Date | undefined>(
     value ? parse(value, "yyyy-MM-dd", new Date()) : undefined,
@@ -89,6 +91,7 @@ export function DateInput({
         placeholder={placeholder}
         className={cn("pr-10", className)}
         required={required}
+        tabIndex={tabIndex}
       />
       <Popover>
         <PopoverTrigger asChild>
@@ -98,6 +101,7 @@ export function DateInput({
               "absolute right-0 top-0 h-full px-3 py-2",
               "border-l-0 rounded-l-none",
             )}
+            tabIndex={-1}
           >
             <CalendarIcon className="h-4 w-4" />
           </Button>

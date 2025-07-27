@@ -169,6 +169,10 @@ export function PatientForm({
       loadProcedureTemplates();
       loadInsuranceCompanies();
       loadProcedureInsurancePrices();
+      // Always set today's date when opening the form for new patients
+      if (!patient) {
+        setVisitDate(new Date().toISOString().split("T")[0]);
+      }
     }
   }, [open]);
 
@@ -523,6 +527,7 @@ export function PatientForm({
                 value={visitDate}
                 onChange={(date) => setVisitDate(date)}
                 required
+                tabIndex={1}
               />
             </div>
             <div className="space-y-2">
@@ -534,7 +539,7 @@ export function PatientForm({
                 }
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger id="patientType" tabIndex={2}>
                   <SelectValue placeholder="Select patient type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -555,6 +560,7 @@ export function PatientForm({
                 value={patientName}
                 onChange={(e) => setPatientName(e.target.value)}
                 required
+                tabIndex={3}
               />
             </div>
             <div className="space-y-2">
@@ -566,6 +572,7 @@ export function PatientForm({
                 value={fileNumber}
                 onChange={(e) => setFileNumber(e.target.value)}
                 required
+                tabIndex={4}
               />
             </div>
           </div>
@@ -580,6 +587,7 @@ export function PatientForm({
                 placeholder="Enter age"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
+                tabIndex={5}
               />
             </div>
             <div className="space-y-2">
@@ -592,7 +600,7 @@ export function PatientForm({
                 }
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger id="gender" tabIndex={6}>
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -614,7 +622,7 @@ export function PatientForm({
                 onValueChange={(value) => setInsuranceCompany(value)}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger id="insuranceCompany" tabIndex={7}>
                   <SelectValue placeholder="Select insurance company" />
                 </SelectTrigger>
                 <SelectContent>
@@ -637,97 +645,106 @@ export function PatientForm({
                 onClick={addProcedure}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
+                tabIndex={patientType === "Insurance" ? 8 : 7}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add Procedure
               </Button>
             </div>
 
-            {procedures.map((procedure, index) => (
-              <Card key={procedure.id} className="p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium">Procedure {index + 1}</h4>
-                    {procedure.name && !procedure.templateId && (
-                      <Badge variant="secondary" className="text-xs">
-                        OCR
-                      </Badge>
-                    )}
-                  </div>
-                  {procedures.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeProcedure(procedure.id)}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Procedure Name</Label>
-                    {procedure.templateId || !procedure.name ? (
-                      <Select
-                        value={procedure.templateId}
-                        onValueChange={(value) => {
-                          selectProcedureTemplate(procedure.id, value);
-                        }}
-                        required
+            {procedures.map((procedure, index) => {
+              const baseTabIndex = patientType === "Insurance" ? 9 : 8;
+              const procedureTabIndex = baseTabIndex + (index * 3);
+              
+              return (
+                <Card key={procedure.id} className="p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">Procedure {index + 1}</h4>
+                      {procedure.name && !procedure.templateId && (
+                        <Badge variant="secondary" className="text-xs">
+                          OCR
+                        </Badge>
+                      )}
+                    </div>
+                    {procedures.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeProcedure(procedure.id)}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select procedure" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {procedureTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        value={procedure.name}
-                        onChange={(e) =>
-                          updateProcedure(procedure.id, "name", e.target.value)
-                        }
-                        placeholder="Enter procedure name"
-                        required
-                      />
+                        <X className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label>Discount (%)</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={procedure.discount}
-                      onChange={(e) =>
-                        updateProcedure(
-                          procedure.id,
-                          "discount",
-                          Number(e.target.value),
-                        )
-                      }
-                    />
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Procedure Name</Label>
+                      {procedure.templateId || !procedure.name ? (
+                        <Select
+                          value={procedure.templateId}
+                          onValueChange={(value) => {
+                            selectProcedureTemplate(procedure.id, value);
+                          }}
+                          required
+                        >
+                          <SelectTrigger tabIndex={procedureTabIndex}>
+                            <SelectValue placeholder="Select procedure" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {procedureTemplates.map((template) => (
+                              <SelectItem key={template.id} value={template.id}>
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={procedure.name}
+                          onChange={(e) =>
+                            updateProcedure(procedure.id, "name", e.target.value)
+                          }
+                          placeholder="Enter procedure name"
+                          required
+                          tabIndex={procedureTabIndex}
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Discount (%)</Label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={procedure.discount}
+                        onChange={(e) =>
+                          updateProcedure(
+                            procedure.id,
+                            "discount",
+                            Number(e.target.value),
+                          )
+                        }
+                        tabIndex={procedureTabIndex + 1}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Final Amount (SAR)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={procedure.finalAmount.toFixed(2)}
+                        readOnly
+                        className="bg-gray-50"
+                        tabIndex={procedureTabIndex + 2}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Final Amount (SAR)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={procedure.finalAmount.toFixed(2)}
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
 
           {/* Total Amount */}
@@ -752,6 +769,7 @@ export function PatientForm({
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               rows={3}
+              tabIndex={patientType === "Insurance" ? 8 + (procedures.length * 3) : 7 + (procedures.length * 3)}
             />
           </div>
 
@@ -762,6 +780,7 @@ export function PatientForm({
               variant="outline"
               onClick={() => handleDialogClose(false)}
               className="flex-1"
+              tabIndex={patientType === "Insurance" ? 9 + (procedures.length * 3) : 8 + (procedures.length * 3)}
             >
               Cancel
             </Button>
@@ -769,6 +788,7 @@ export function PatientForm({
               type="submit"
               disabled={isLoading}
               className="bg-green-600 hover:bg-green-700 flex-1"
+              tabIndex={patientType === "Insurance" ? 10 + (procedures.length * 3) : 9 + (procedures.length * 3)}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Plus className="mr-2 h-4 w-4" />
