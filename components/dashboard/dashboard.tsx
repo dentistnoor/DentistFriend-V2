@@ -145,10 +145,12 @@ export function Dashboard({}: DashboardProps) {
         break;
     }
 
-    // Sort patients alphabetically by patient name
-    filtered = filtered.sort((a, b) =>
-      a.patientName.localeCompare(b.patientName),
-    );
+    // Sort patients by visit date (most recent first)
+    filtered = filtered.sort((a, b) => {
+      const dateA = new Date(a.visitDate);
+      const dateB = new Date(b.visitDate);
+      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+    });
 
     setFilteredPatients(filtered);
   }, [patients, searchTerm, dateFilter, customDateRange]);
