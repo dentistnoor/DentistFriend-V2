@@ -46,8 +46,11 @@ import {
   X,
   Check,
   DollarSign,
+  Download,
+  Upload,
 } from "lucide-react";
 import { formatDateForDisplay } from "@/lib/utils";
+import * as XLSX from 'xlsx';
 
 interface SettingsPageProps {}
 
@@ -70,6 +73,7 @@ export function SettingsPage({}: SettingsPageProps) {
   const procedureFormRef = useRef<HTMLFormElement>(null);
   const insuranceFormRef = useRef<HTMLFormElement>(null);
   const profileFormRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -576,6 +580,189 @@ export function SettingsPage({}: SettingsPageProps) {
     return price?.price || 0;
   };
 
+  const handleExportProcedures = () => {
+    if (procedureTemplates.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "There are no procedures to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Format data for Excel export
+    const exportData = procedureTemplates.map(procedure => ({
+      'Procedure Name': procedure.name,
+      'Cash Price (SAR)': procedure.cashPrice,
+    }));
+
+    // Create Excel workbook
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Procedure Templates");
+
+    // Generate Excel file
+    XLSX.writeFile(workbook, `procedure_templates_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+    toast({
+      title: "Export successful",
+      description: `Exported ${procedureTemplates.length} procedure templates to Excel.`,
+    });
+  };
+
+  const handleImportProcedures = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      toast({
+        title: "Invalid file format",
+        description: "Please select an Excel (.xlsx) file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(worksheet) as Array<{
+        'Procedure Name': string;
+        'Cash Price (SAR)': string | number;
+      }>;
+
+      if (data.length === 0) {
+        toast({
+          title: "Invalid file",
+          description: "Excel file is empty or does not contain data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate header
+      const firstRow = data[0];
+      if (!firstRow['Procedure Name'] || !firstRow['Cash Price (SAR)']) {
+        toast({
+          title: "Invalid header",
+          description: "Excel must have headers: 'Procedure Name' and 'Cash Price (SAR)' in the first row",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if there are any data rows
+      if (data.length < 2) {
+        toast({
+          title: "No data rows",
+          description: "Excel file must contain at least one data row after the header.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Process data rows (skip header row)
+      const proceduresToAdd: { name: string; cashPrice: number }[] = [];
+      const errors: string[] = [];
+
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row['Procedure Name'] || !row['Cash Price (SAR)']) continue;
+
+        const procedureName = String(row['Procedure Name']).trim();
+        const cashPriceStr = String(row['Cash Price (SAR)']).trim();
+
+        if (!procedureName) {
+          errors.push(`Row ${i + 1}: Procedure name is required`);
+          continue;
+        }
+
+        const cashPrice = parseFloat(cashPriceStr);
+        if (isNaN(cashPrice) || cashPrice < 0) {
+          errors.push(`Row ${i + 1}: Invalid cash price`);
+          continue;
+        }
+
+        // Check for duplicates
+        const exists = procedureTemplates.some(
+          (p) => p.name.trim().toLowerCase() === procedureName.toLowerCase(),
+        );
+        if (exists) {
+          errors.push(`Row ${i + 1}: Procedure '${procedureName}' already exists`);
+          continue;
+        }
+
+        proceduresToAdd.push({
+          name: procedureName,
+          cashPrice: cashPrice,
+        });
+      }
+
+      if (errors.length > 0) {
+        toast({
+          title: "Import errors",
+          description: `Found ${errors.length} errors. Please check your Excel file. Check browser console for details.`,
+          variant: "destructive",
+        });
+        console.error("Import errors:", errors);
+        console.error("Raw data:", data);
+        return;
+      }
+
+      if (proceduresToAdd.length === 0) {
+        toast({
+          title: "No valid procedures",
+          description: "No valid procedures found in the Excel file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Add procedures to database
+      if (!user?.email) {
+        toast({
+          title: "Error",
+          description: "User not authenticated.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const db = getFirestoreInstance();
+      for (const procedure of proceduresToAdd) {
+        await addDoc(
+          collection(db, "doctors", user.email, "procedure_templates"),
+          procedure,
+        );
+      }
+
+      await loadProcedureTemplates();
+
+      toast({
+        title: "Import successful",
+        description: `Successfully imported ${proceduresToAdd.length} procedure templates.`,
+      });
+
+    } catch (error) {
+      console.error("Import error:", error);
+      toast({
+        title: "Import failed",
+        description: "Failed to import procedures. Please check your file format.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="mb-8">
@@ -687,10 +874,39 @@ export function SettingsPage({}: SettingsPageProps) {
         <TabsContent value="procedures" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Stethoscope className="h-5 w-5" />
-                Procedure Templates
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5" />
+                  Procedure Templates
+                </CardTitle>
+                              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleExportProcedures}
+                  disabled={isLoading || procedureTemplates.length === 0}
+                  title="Export all procedures to Excel file"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  title="Import procedures from Excel file (.xlsx format)"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Excel
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleImportProcedures}
+                  style={{ display: 'none' }}
+                />
+              </div>
+              </div>
             </CardHeader>
             <CardContent>
               <form
@@ -698,6 +914,10 @@ export function SettingsPage({}: SettingsPageProps) {
                 className="space-y-4 mb-6"
                 ref={procedureFormRef}
               >
+                <div className="text-sm text-gray-600 mb-4 p-3 bg-blue-50 rounded-md">
+                  <strong>💡 Tip:</strong> You can import multiple procedures at once using the "Import Excel" button. 
+                  The Excel file should have headers "Procedure Name" and "Cash Price (SAR)" in the first row.
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="procedureName">Procedure Name</Label>
@@ -955,9 +1175,10 @@ export function SettingsPage({}: SettingsPageProps) {
                               defaultValue={company.name}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
+                                  const target = e.target as HTMLInputElement;
                                   handleEditInsuranceCompany(
                                     company.id,
-                                    e.target.value,
+                                    target.value,
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingInsurance(null);
@@ -1101,10 +1322,11 @@ export function SettingsPage({}: SettingsPageProps) {
                                     className="w-20"
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") {
+                                        const target = e.target as HTMLInputElement;
                                         handleUpdateInsurancePrice(
                                           procedure.id,
                                           company.id,
-                                          parseFloat(e.target.value),
+                                          parseFloat(target.value),
                                         );
                                       } else if (e.key === "Escape") {
                                         setEditingPrice(null);
