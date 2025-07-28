@@ -50,8 +50,12 @@ Please analyze this image and extract patient information in the following JSON 
     {
       "name": "patient name",
       "file_number": "file number/ID", 
+      "age": "age in years (numeric)",
       "gender": "Female or Male",
       "nationality": "nationality/origin",
+      "patient_type": "New or Followup",
+      "payment_type": "Cash or Insurance",
+      "insurance_company": "insurance company name (if payment_type is Insurance)",
       "procedure": "procedure name(s)",
       "amount": "numeric amount"
     }
@@ -63,8 +67,12 @@ Instructions:
 - Extract all columns from the table:
   - Patient name
   - File number/ID
+  - Age (numeric value in years)
   - Gender (convert to full format: Female/Male)
   - Nationality
+  - Patient Type (New or Followup)
+  - Payment Type (Cash or Insurance)
+  - Insurance Company (only if payment type is Insurance)
   - Procedure(s) performed
   - Amount (numeric value, leave blank if not present)
 
@@ -74,6 +82,9 @@ Important:
 - Convert gender to full format (Female/Male) - NOT abbreviations
 - Extract amounts as numbers only
 - The date at the top of the image should be used as the visit_date for ALL patients in the table
+- For patient_type, look for indicators like "New", "Followup", "F/U", "Follow-up", etc.
+- For payment_type, look for "Cash", "Insurance", "Ins", etc.
+- For insurance_company, extract the company name if payment_type is Insurance
 
 Return only valid JSON.`;
 
@@ -87,7 +98,7 @@ Return only valid JSON.`;
           if (jsonMatch) {
             const json = JSON.parse(jsonMatch[0]);
             if (Array.isArray(json.patients)) {
-              // Add visit_date to each patient record and exclude nationality
+              // Add visit_date to each patient record
               const patientsWithDate = json.patients.map((patient: any) => {
                 let formattedDate =
                   json.visit_date || new Date().toISOString().split("T")[0];
@@ -104,14 +115,19 @@ Return only valid JSON.`;
                   }
                 }
 
-                // Return only the fields we want (exclude nationality)
+                // Return all the required fields
                 return {
-                  name: patient.name,
-                  file_number: patient.file_number,
-                  gender: patient.gender,
-                  procedure: patient.procedure,
-                  amount: patient.amount,
                   visitDate: formattedDate,
+                  name: patient.name || "",
+                  file_number: patient.file_number || "",
+                  age: patient.age || "",
+                  gender: patient.gender || "",
+                  nationality: patient.nationality || "",
+                  patientType: patient.patient_type || "",
+                  paymentType: patient.payment_type || "Cash",
+                  insuranceCompany: patient.insurance_company || "",
+                  procedure: patient.procedure || "",
+                  amount: patient.amount || "",
                 };
               });
               allRecords.push(...patientsWithDate);

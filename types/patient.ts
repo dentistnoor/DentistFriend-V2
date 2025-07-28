@@ -5,6 +5,8 @@ export interface PatientRecord {
   fileNumber: string;
   age: number;
   gender: "Male" | "Female" | "Other";
+  nationality?: string;
+  patientType?: "New" | "Followup";
   type: "Cash" | "Insurance";
   insuranceCompany?: string;
   procedures: ProcedureItem[];

@@ -19,11 +19,18 @@ import { useAuth } from "@/lib/auth-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { getFirestoreInstance } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { formatGender } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FileWithPreview extends File {
   id: string;
@@ -33,12 +40,17 @@ interface FileWithPreview extends File {
 interface OCRUploadPageProps {}
 
 interface PatientOCRRecord {
+  visitDate: string;
   name: string;
   file_number: string;
+  age: string;
   gender: string;
+  nationality: string;
+  patientType: "New" | "Followup" | "";
+  paymentType: "Cash" | "Insurance";
+  insuranceCompany: string;
   procedure: string;
   amount: string;
-  visitDate?: string;
 }
 
 export function OCRUploadPage({}: OCRUploadPageProps) {
@@ -214,41 +226,73 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
 
   const handleConfirm = async () => {
     if (!user?.email) return alert("You must be logged in to save records.");
+    
+    // Validate that we have records to save
+    if (results.length === 0) {
+      alert("No records to save.");
+      return;
+    }
+    
     setIsSaving(true);
     try {
       for (const record of results) {
+        // Validate required fields
+        if (!record.name || !record.file_number) {
+          console.error("Missing required fields for record:", record);
+          continue; // Skip this record and continue with others
+        }
+        
         const patientData = {
           visitDate: record.visitDate
             ? convertDateFormat(record.visitDate)
             : new Date().toISOString().split("T")[0],
-          patientName: record.name,
-          fileNumber: record.file_number,
-          age: "",
-          gender: record.gender === "Male" ? "M" : "F",
-          type: "Cash",
-          insuranceCompany: "",
+          patientName: record.name || "",
+          fileNumber: record.file_number || "",
+          age: (() => {
+            if (typeof record.age === 'number') return record.age;
+            if (typeof record.age === 'string' && record.age.trim() !== "") return Number.parseInt(record.age);
+            return 0;
+          })(),
+          gender: record.gender as "Male" | "Female" | "Other" || "Other",
+          nationality: record.nationality || "",
+          patientType: record.patientType || "",
+          type: record.paymentType || "Cash",
+          insuranceCompany: record.insuranceCompany || "",
           procedures: [
             {
               id: Math.random().toString(36).substr(2, 9),
               name: capitalizeProcedure(record.procedure || "Not specified"),
-              price: Number(record.amount) || 0,
+              price: (() => {
+                if (typeof record.amount === 'number') return record.amount;
+                if (typeof record.amount === 'string' && record.amount.trim() !== "") return Number(record.amount);
+                return 0;
+              })(),
               discount: 0,
-              finalAmount: Number(record.amount) || 0,
+              finalAmount: (() => {
+                if (typeof record.amount === 'number') return record.amount;
+                if (typeof record.amount === 'string' && record.amount.trim() !== "") return Number(record.amount);
+                return 0;
+              })(),
             },
           ],
-          totalAmount: Number(record.amount) || 0,
+          totalAmount: (() => {
+            if (typeof record.amount === 'number') return record.amount;
+            if (typeof record.amount === 'string' && record.amount.trim() !== "") return Number(record.amount);
+            return 0;
+          })(),
           remarks: "",
           createdAt: new Date(),
         };
         await addDoc(
-          collection(db(), "doctors", user.email, "patient_info"),
+          collection(getFirestoreInstance(), "doctors", user.email, "patient_info"),
           patientData,
         );
       }
       alert("Records saved successfully!");
       clearAllFiles();
     } catch (err) {
-      alert("Failed to save records.");
+      console.error("Error saving records:", err);
+      alert(`Failed to save records: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
       setIsSaving(false);
     }
@@ -441,6 +485,32 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
             {currentPatient && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Visit Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="visitDate">Visit Date</Label>
+                    {editingIndex === currentPatientIndex ? (
+                      <Input
+                        id="visitDate"
+                        value={currentPatient.visitDate}
+                        onChange={(e) =>
+                          handleFieldChange(
+                            currentPatientIndex,
+                            "visitDate",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="DD/MM/YYYY"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-md">
+                        <p className="font-medium">
+                          {currentPatient.visitDate || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Patient Name */}
                   <div className="space-y-2">
                     <Label htmlFor="name">Patient Name</Label>
                     {editingIndex === currentPatientIndex ? (
@@ -462,6 +532,7 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
                     )}
                   </div>
 
+                  {/* File Number */}
                   <div className="space-y-2">
                     <Label htmlFor="fileNumber">File Number</Label>
                     {editingIndex === currentPatientIndex ? (
@@ -485,20 +556,54 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
                     )}
                   </div>
 
+                  {/* Age */}
                   <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
+                    <Label htmlFor="age">Age</Label>
                     {editingIndex === currentPatientIndex ? (
                       <Input
-                        id="gender"
-                        value={currentPatient.gender}
+                        id="age"
+                        type="number"
+                        value={currentPatient.age}
                         onChange={(e) =>
                           handleFieldChange(
                             currentPatientIndex,
-                            "gender",
+                            "age",
                             e.target.value,
                           )
                         }
                       />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-md">
+                        <p className="font-medium">
+                          {currentPatient.age || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Gender */}
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    {editingIndex === currentPatientIndex ? (
+                      <Select
+                        value={currentPatient.gender}
+                        onValueChange={(value) =>
+                          handleFieldChange(
+                            currentPatientIndex,
+                            "gender",
+                            value,
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <div className="p-3 bg-gray-50 rounded-md">
                         <p className="font-medium">
@@ -508,6 +613,118 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
                     )}
                   </div>
 
+                  {/* Nationality */}
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality">Nationality</Label>
+                    {editingIndex === currentPatientIndex ? (
+                      <Input
+                        id="nationality"
+                        value={currentPatient.nationality}
+                        onChange={(e) =>
+                          handleFieldChange(
+                            currentPatientIndex,
+                            "nationality",
+                            e.target.value,
+                          )
+                        }
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-md">
+                        <p className="font-medium">
+                          {currentPatient.nationality || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Patient Type (New/Followup) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="patientType">Patient Type</Label>
+                    {editingIndex === currentPatientIndex ? (
+                      <Select
+                        value={currentPatient.patientType}
+                        onValueChange={(value: "New" | "Followup" | "") =>
+                          handleFieldChange(
+                            currentPatientIndex,
+                            "patientType",
+                            value,
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select patient type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="New">New</SelectItem>
+                          <SelectItem value="Followup">Followup</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-md">
+                        <p className="font-medium">
+                          {currentPatient.patientType || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Type (Cash/Insurance) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentType">Type</Label>
+                    {editingIndex === currentPatientIndex ? (
+                      <Select
+                        value={currentPatient.paymentType}
+                        onValueChange={(value: "Cash" | "Insurance") =>
+                          handleFieldChange(
+                            currentPatientIndex,
+                            "paymentType",
+                            value,
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="Insurance">Insurance</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-md">
+                        <p className="font-medium">
+                          {currentPatient.paymentType || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Insurance Company */}
+                  <div className="space-y-2">
+                    <Label htmlFor="insuranceCompany">Insurance Company</Label>
+                    {editingIndex === currentPatientIndex ? (
+                      <Input
+                        id="insuranceCompany"
+                        value={currentPatient.insuranceCompany}
+                        onChange={(e) =>
+                          handleFieldChange(
+                            currentPatientIndex,
+                            "insuranceCompany",
+                            e.target.value,
+                          )
+                        }
+                        disabled={currentPatient.paymentType !== "Insurance"}
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-md">
+                        <p className="font-medium">
+                          {currentPatient.insuranceCompany || "Not specified"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Procedure */}
                   <div className="space-y-2">
                     <Label htmlFor="procedure">Procedure</Label>
                     {editingIndex === currentPatientIndex ? (
@@ -533,11 +750,14 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
                     )}
                   </div>
 
+                  {/* Total Amount */}
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Amount (SAR)</Label>
+                    <Label htmlFor="amount">Total Amount (SAR)</Label>
                     {editingIndex === currentPatientIndex ? (
                       <Input
                         id="amount"
+                        type="number"
+                        step="0.01"
                         value={currentPatient.amount}
                         onChange={(e) =>
                           handleFieldChange(
@@ -556,15 +776,6 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
                         </p>
                       </div>
                     )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="visitDate">Visit Date</Label>
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <p className="font-medium">
-                        {currentPatient.visitDate || "Not specified"}
-                      </p>
-                    </div>
                   </div>
                 </div>
 

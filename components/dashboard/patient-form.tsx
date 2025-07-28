@@ -71,11 +71,15 @@ export function PatientForm({
   const [gender, setGender] = useState<"Male" | "Female" | "Other" | "">(
     patient?.gender || "",
   );
+  const [nationality, setNationality] = useState(patient?.nationality || "");
+  const [patientType, setPatientType] = useState<"New" | "Followup" | "">(
+    patient?.patientType || "",
+  );
   const [insuranceCompany, setInsuranceCompany] = useState(
     patient?.insuranceCompany || "",
   );
   const [remarks, setRemarks] = useState(patient?.remarks || "");
-  const [patientType, setPatientType] = useState<"Cash" | "Insurance">(
+  const [paymentType, setPaymentType] = useState<"Cash" | "Insurance">(
     patient?.type || "Cash",
   );
   const [procedures, setProcedures] = useState<ProcedureItem[]>(
@@ -111,9 +115,11 @@ export function PatientForm({
     setFileNumber("");
     setAge("");
     setGender("");
+    setNationality("");
+    setPatientType("");
     setInsuranceCompany("");
     setRemarks("");
-    setPatientType("Cash");
+    setPaymentType("Cash");
     setProcedures([
       {
         id: "1",
@@ -133,9 +139,11 @@ export function PatientForm({
       setFileNumber(patient.fileNumber);
       setAge(patient.age.toString());
       setGender(formatGender(patient.gender) as "Male" | "Female" | "Other");
+      setNationality(patient.nationality || "");
+      setPatientType(patient.patientType || "");
       setInsuranceCompany(patient.insuranceCompany || "");
       setRemarks(patient.remarks || "");
-      setPatientType(patient.type);
+      setPaymentType(patient.type);
 
       const mappedProcedures = patient.procedures?.map((p) => {
         const matchingTemplate = procedureTemplates.find(
@@ -188,7 +196,7 @@ export function PatientForm({
     }
   }, [
     insuranceCompany,
-    patientType,
+    paymentType,
     procedureTemplates,
     insuranceCompanies,
     procedureInsurancePrices,
@@ -266,7 +274,7 @@ export function PatientForm({
   };
 
   const updateAllProceduresForInsurance = () => {
-    if (patientType === "Insurance" && insuranceCompany) {
+    if (paymentType === "Insurance" && insuranceCompany) {
       const insuranceCompanyObj = insuranceCompanies.find(
         (c) => c.name === insuranceCompany,
       );
@@ -354,7 +362,7 @@ export function PatientForm({
 
     let price = template.cashPrice;
 
-    if (patientType === "Insurance" && insuranceCompany) {
+    if (paymentType === "Insurance" && insuranceCompany) {
       const insuranceCompanyObj = insuranceCompanies.find(
         (c) => c.name === insuranceCompany,
       );
@@ -404,7 +412,9 @@ export function PatientForm({
       fileNumber: fileNumber,
       age: age && age.trim() !== "" ? Number.parseInt(age) : "",
       gender: formatGenderForDB(gender),
-      type: patientType,
+      nationality: nationality,
+      patientType: patientType,
+      type: paymentType,
       procedures: procedures.filter((p) => p.name.trim() !== ""),
       totalAmount: calculateTotalAmount(),
       remarks: remarks,
@@ -412,7 +422,7 @@ export function PatientForm({
     };
 
     // Only add insuranceCompany if patient type is Insurance and value exists
-    if (patientType === "Insurance") {
+    if (paymentType === "Insurance") {
       if (insuranceCompany && insuranceCompany.trim() !== "") {
         (patientData as any).insuranceCompany = insuranceCompany;
       }
@@ -424,7 +434,7 @@ export function PatientForm({
       !patientData.patientName ||
       !patientData.fileNumber ||
       !gender ||
-      !patientType
+      !paymentType
     ) {
       toast({
         title: "Validation Error",
@@ -435,9 +445,9 @@ export function PatientForm({
       return;
     }
 
-    // Validate insurance company if patient type is Insurance
+    // Validate insurance company if payment type is Insurance
     if (
-      patientType === "Insurance" &&
+      paymentType === "Insurance" &&
       (!insuranceCompany || insuranceCompany.trim() === "")
     ) {
       toast({
@@ -535,16 +545,16 @@ export function PatientForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="patientType">Patient Type</Label>
+              <Label htmlFor="paymentType">Type</Label>
               <Select
-                value={patientType}
+                value={paymentType}
                 onValueChange={(value: "Cash" | "Insurance") =>
-                  setPatientType(value)
+                  setPaymentType(value)
                 }
                 required
               >
-                <SelectTrigger id="patientType" tabIndex={2}>
-                  <SelectValue placeholder="Select patient type" />
+                <SelectTrigger id="paymentType" tabIndex={2}>
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cash">Cash</SelectItem>
@@ -616,8 +626,40 @@ export function PatientForm({
             </div>
           </div>
 
+          {/* Nationality and Patient Type (New/Followup) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nationality">Nationality</Label>
+              <Input
+                id="nationality"
+                name="nationality"
+                placeholder="Enter nationality"
+                value={nationality}
+                onChange={(e) => setNationality(e.target.value)}
+                tabIndex={7}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="patientType">Patient Type</Label>
+              <Select
+                name="patientType"
+                value={patientType}
+                onValueChange={(value: "New" | "Followup" | "") => setPatientType(value)}
+                required
+              >
+                <SelectTrigger id="patientTypeType" tabIndex={8}>
+                  <SelectValue placeholder="Select patient type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Followup">Followup</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Insurance Company (only for Insurance type) */}
-          {patientType === "Insurance" && (
+          {paymentType === "Insurance" && (
             <div className="space-y-2">
               <Label htmlFor="insuranceCompany">Insurance Company</Label>
               <Select
@@ -626,7 +668,7 @@ export function PatientForm({
                 onValueChange={(value) => setInsuranceCompany(value)}
                 required
               >
-                <SelectTrigger id="insuranceCompany" tabIndex={7}>
+                <SelectTrigger id="insuranceCompany" tabIndex={9}>
                   <SelectValue placeholder="Select insurance company" />
                 </SelectTrigger>
                 <SelectContent>
@@ -649,7 +691,7 @@ export function PatientForm({
                 onClick={addProcedure}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
-                tabIndex={patientType === "Insurance" ? 8 : 7}
+                tabIndex={paymentType === "Insurance" ? 10 : 9}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add Procedure
@@ -657,7 +699,7 @@ export function PatientForm({
             </div>
 
             {procedures.map((procedure, index) => {
-              const baseTabIndex = patientType === "Insurance" ? 9 : 8;
+              const baseTabIndex = paymentType === "Insurance" ? 11 : 10;
               const procedureTabIndex = baseTabIndex + (index * 3);
               
               return (
@@ -779,7 +821,7 @@ export function PatientForm({
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               rows={3}
-              tabIndex={patientType === "Insurance" ? 8 + (procedures.length * 3) : 7 + (procedures.length * 3)}
+              tabIndex={paymentType === "Insurance" ? 10 + (procedures.length * 3) : 9 + (procedures.length * 3)}
             />
           </div>
 
@@ -790,7 +832,7 @@ export function PatientForm({
               variant="outline"
               onClick={() => handleDialogClose(false)}
               className="flex-1"
-              tabIndex={patientType === "Insurance" ? 9 + (procedures.length * 3) : 8 + (procedures.length * 3)}
+              tabIndex={paymentType === "Insurance" ? 11 + (procedures.length * 3) : 10 + (procedures.length * 3)}
             >
               Cancel
             </Button>
@@ -798,7 +840,7 @@ export function PatientForm({
               type="submit"
               disabled={isLoading}
               className="bg-green-600 hover:bg-green-700 flex-1"
-              tabIndex={patientType === "Insurance" ? 10 + (procedures.length * 3) : 9 + (procedures.length * 3)}
+              tabIndex={paymentType === "Insurance" ? 12 + (procedures.length * 3) : 11 + (procedures.length * 3)}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Plus className="mr-2 h-4 w-4" />

@@ -109,9 +109,11 @@ export function PatientTable({
               <TableHead>File Number</TableHead>
               <TableHead className="w-16">Age</TableHead>
               <TableHead>Gender</TableHead>
+              <TableHead>Nationality</TableHead>
+              <TableHead>Patient Type</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead>Insurance</TableHead>
-              <TableHead>Procedures</TableHead>
+              <TableHead>Insurance Co.</TableHead>
+              <TableHead>Procedure</TableHead>
               <TableHead>Total Amount</TableHead>
               <TableHead className="w-24">Actions</TableHead>
             </TableRow>
@@ -120,7 +122,7 @@ export function PatientTable({
             {currentPatients.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={11}
+                  colSpan={13}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No patient records found. Add your first patient record to get
@@ -133,21 +135,15 @@ export function PatientTable({
                   <TableCell className="font-medium">
                     {startIndex + index + 1}
                   </TableCell>
-                  <TableCell>
-                    {formatDateForDisplay(patient.visitDate)}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {patient.patientName}
-                  </TableCell>
+                  <TableCell>{formatDateForDisplay(patient.visitDate)}</TableCell>
+                  <TableCell className="font-medium">{patient.patientName}</TableCell>
                   <TableCell>{patient.fileNumber}</TableCell>
                   <TableCell>{formatAge(patient.age)}</TableCell>
                   <TableCell>{formatGender(patient.gender)}</TableCell>
+                  <TableCell>{patient.nationality || "-"}</TableCell>
+                  <TableCell>{patient.patientType || "-"}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        patient.type === "Cash" ? "default" : "secondary"
-                      }
-                    >
+                    <Badge variant={patient.type === "Cash" ? "default" : "secondary"}>
                       {patient.type}
                     </Badge>
                   </TableCell>
