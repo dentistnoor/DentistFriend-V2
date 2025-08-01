@@ -41,7 +41,7 @@ export function PatientTable({
   onDelete,
 }: PatientTableProps) {
   const [deletePatient, setDeletePatient] = useState<PatientRecord | null>(
-    null,
+    null
   );
   const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
@@ -64,11 +64,12 @@ export function PatientTable({
     try {
       const db = getFirestoreInstance();
       await deleteDoc(
-        doc(db, "doctors", user.email, "patient_info", deletePatient.id),
+        doc(db, "doctors", user.email, "patient_info", deletePatient.id)
       );
       toast({
         title: "Patient deleted",
         description: "Patient record has been deleted successfully.",
+        variant: "success",
       });
       onDelete();
     } catch (error) {
@@ -135,15 +136,23 @@ export function PatientTable({
                   <TableCell className="font-medium">
                     {startIndex + index + 1}
                   </TableCell>
-                  <TableCell>{formatDateForDisplay(patient.visitDate)}</TableCell>
-                  <TableCell className="font-medium">{patient.patientName}</TableCell>
+                  <TableCell>
+                    {formatDateForDisplay(patient.visitDate)}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {patient.patientName}
+                  </TableCell>
                   <TableCell>{patient.fileNumber}</TableCell>
                   <TableCell>{formatAge(patient.age)}</TableCell>
                   <TableCell>{formatGender(patient.gender)}</TableCell>
                   <TableCell>{patient.nationality || "-"}</TableCell>
                   <TableCell>{patient.patientType || "-"}</TableCell>
                   <TableCell>
-                    <Badge variant={patient.type === "Cash" ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        patient.type === "Cash" ? "default" : "secondary"
+                      }
+                    >
                       {patient.type}
                     </Badge>
                   </TableCell>
@@ -213,7 +222,7 @@ export function PatientTable({
                   >
                     {page}
                   </Button>
-                ),
+                )
               )}
             </div>
             <Button
