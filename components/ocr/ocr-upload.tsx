@@ -226,13 +226,13 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
 
   const handleConfirm = async () => {
     if (!user?.email) return alert("You must be logged in to save records.");
-    
+
     // Validate that we have records to save
     if (results.length === 0) {
       alert("No records to save.");
       return;
     }
-    
+
     setIsSaving(true);
     try {
       for (const record of results) {
@@ -241,7 +241,7 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
           console.error("Missing required fields for record:", record);
           continue; // Skip this record and continue with others
         }
-        
+
         const patientData = {
           visitDate: record.visitDate
             ? convertDateFormat(record.visitDate)
@@ -249,11 +249,12 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
           patientName: record.name || "",
           fileNumber: record.file_number || "",
           age: (() => {
-            if (typeof record.age === 'number') return record.age;
-            if (typeof record.age === 'string' && record.age.trim() !== "") return Number.parseInt(record.age);
+            if (typeof record.age === "number") return record.age;
+            if (typeof record.age === "string" && record.age.trim() !== "")
+              return Number.parseInt(record.age);
             return 0;
           })(),
-          gender: record.gender as "Male" | "Female" | "Other" || "Other",
+          gender: (record.gender as "Male" | "Female" | "Other") || "Other",
           nationality: record.nationality || "",
           patientType: record.patientType || "",
           type: record.paymentType || "Cash",
@@ -263,28 +264,45 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
               id: Math.random().toString(36).substr(2, 9),
               name: capitalizeProcedure(record.procedure || "Not specified"),
               price: (() => {
-                if (typeof record.amount === 'number') return record.amount;
-                if (typeof record.amount === 'string' && record.amount.trim() !== "") return Number(record.amount);
+                if (typeof record.amount === "number") return record.amount;
+                if (
+                  typeof record.amount === "string" &&
+                  record.amount.trim() !== ""
+                )
+                  return Number(record.amount);
                 return 0;
               })(),
               discount: 0,
               finalAmount: (() => {
-                if (typeof record.amount === 'number') return record.amount;
-                if (typeof record.amount === 'string' && record.amount.trim() !== "") return Number(record.amount);
+                if (typeof record.amount === "number") return record.amount;
+                if (
+                  typeof record.amount === "string" &&
+                  record.amount.trim() !== ""
+                )
+                  return Number(record.amount);
                 return 0;
               })(),
             },
           ],
           totalAmount: (() => {
-            if (typeof record.amount === 'number') return record.amount;
-            if (typeof record.amount === 'string' && record.amount.trim() !== "") return Number(record.amount);
+            if (typeof record.amount === "number") return record.amount;
+            if (
+              typeof record.amount === "string" &&
+              record.amount.trim() !== ""
+            )
+              return Number(record.amount);
             return 0;
           })(),
           remarks: "",
           createdAt: new Date(),
         };
         await addDoc(
-          collection(getFirestoreInstance(), "doctors", user.email, "patient_info"),
+          collection(
+            getFirestoreInstance(),
+            "doctors",
+            user.email,
+            "patient_info",
+          ),
           patientData,
         );
       }
@@ -292,7 +310,9 @@ export function OCRUploadPage({}: OCRUploadPageProps) {
       clearAllFiles();
     } catch (err) {
       console.error("Error saving records:", err);
-      alert(`Failed to save records: ${err instanceof Error ? err.message : "Unknown error"}`);
+      alert(
+        `Failed to save records: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
     } finally {
       setIsSaving(false);
     }

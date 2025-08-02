@@ -53,7 +53,7 @@ export function Dashboard({}: DashboardProps) {
       const db = getFirestoreInstance();
       const q = query(
         collection(db, "doctors", user.email, "patient_info"),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
       );
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -80,8 +80,8 @@ export function Dashboard({}: DashboardProps) {
             .includes(searchTerm.toLowerCase()) ||
           patient.fileNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
           patient.procedures.some((p) =>
-            p.name.toLowerCase().includes(searchTerm.toLowerCase())
-          )
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          ),
       );
     }
 
@@ -96,7 +96,7 @@ export function Dashboard({}: DashboardProps) {
           const visitDateOnly = new Date(
             visitDate.getFullYear(),
             visitDate.getMonth(),
-            visitDate.getDate()
+            visitDate.getDate(),
           );
           return visitDateOnly.getTime() === today.getTime();
         });
@@ -119,7 +119,7 @@ export function Dashboard({}: DashboardProps) {
         const last3Months = new Date(
           now.getFullYear(),
           now.getMonth() - 3,
-          now.getDate()
+          now.getDate(),
         );
         filtered = filtered.filter((patient) => {
           const visitDate = new Date(patient.visitDate);
@@ -130,7 +130,7 @@ export function Dashboard({}: DashboardProps) {
         const lastYear = new Date(
           now.getFullYear() - 1,
           now.getMonth(),
-          now.getDate()
+          now.getDate(),
         );
         filtered = filtered.filter((patient) => {
           const visitDate = new Date(patient.visitDate);
@@ -217,7 +217,7 @@ export function Dashboard({}: DashboardProps) {
           `"${patient.procedures.map((p) => p.name).join("; ")}"`,
           patient.totalAmount.toFixed(2),
           `"${patient.remarks || ""}"`,
-        ].join(",")
+        ].join(","),
       ),
     ].join("\n");
 
@@ -228,7 +228,7 @@ export function Dashboard({}: DashboardProps) {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `patient_records_${new Date().toISOString().split("T")[0]}.csv`
+      `patient_records_${new Date().toISOString().split("T")[0]}.csv`,
     );
     link.style.visibility = "hidden";
     document.body.appendChild(link);

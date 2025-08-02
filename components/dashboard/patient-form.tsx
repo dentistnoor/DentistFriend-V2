@@ -63,24 +63,24 @@ export function PatientForm({
 }: PatientFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [visitDate, setVisitDate] = useState(
-    patient?.visitDate || new Date().toISOString().split("T")[0]
+    patient?.visitDate || new Date().toISOString().split("T")[0],
   );
   const [patientName, setPatientName] = useState(patient?.patientName || "");
   const [fileNumber, setFileNumber] = useState(patient?.fileNumber || "");
   const [age, setAge] = useState(patient?.age?.toString() || "");
   const [gender, setGender] = useState<"Male" | "Female" | "Other" | "">(
-    patient?.gender || ""
+    patient?.gender || "",
   );
   const [nationality, setNationality] = useState(patient?.nationality || "");
   const [patientType, setPatientType] = useState<"New" | "Followup" | "">(
-    patient?.patientType || ""
+    patient?.patientType || "",
   );
   const [insuranceCompany, setInsuranceCompany] = useState(
-    patient?.insuranceCompany || ""
+    patient?.insuranceCompany || "",
   );
   const [remarks, setRemarks] = useState(patient?.remarks || "");
   const [paymentType, setPaymentType] = useState<"Cash" | "Insurance">(
-    patient?.type || "Cash"
+    patient?.type || "Cash",
   );
   const [procedures, setProcedures] = useState<ProcedureItem[]>(
     patient?.procedures?.map((p) => ({
@@ -95,7 +95,7 @@ export function PatientForm({
         finalAmount: 0,
         templateId: "",
       },
-    ]
+    ],
   );
   const [procedureTemplates, setProcedureTemplates] = useState<
     ProcedureTemplate[]
@@ -147,7 +147,7 @@ export function PatientForm({
 
       const mappedProcedures = patient.procedures?.map((p) => {
         const matchingTemplate = procedureTemplates.find(
-          (template) => template.name.toLowerCase() === p.name.toLowerCase()
+          (template) => template.name.toLowerCase() === p.name.toLowerCase(),
         );
 
         return {
@@ -207,7 +207,7 @@ export function PatientForm({
     try {
       const db = getFirestoreInstance();
       const snapshot = await getDocs(
-        collection(db, "doctors", user.email, "procedure_templates")
+        collection(db, "doctors", user.email, "procedure_templates"),
       );
       const templates: ProcedureTemplate[] = [];
       snapshot.forEach((doc) => {
@@ -228,7 +228,7 @@ export function PatientForm({
     try {
       const db = getFirestoreInstance();
       const snapshot = await getDocs(
-        collection(db, "doctors", user.email, "insurance_companies")
+        collection(db, "doctors", user.email, "insurance_companies"),
       );
       const companies: InsuranceCompany[] = [];
       snapshot.forEach((doc) => {
@@ -249,7 +249,7 @@ export function PatientForm({
     try {
       const db = getFirestoreInstance();
       const snapshot = await getDocs(
-        collection(db, "doctors", user.email, "procedure_insurance_prices")
+        collection(db, "doctors", user.email, "procedure_insurance_prices"),
       );
       const prices: ProcedureInsurancePrice[] = [];
       snapshot.forEach((doc) => {
@@ -263,12 +263,12 @@ export function PatientForm({
 
   const getInsurancePrice = (
     procedureId: string,
-    insuranceCompanyId: string
+    insuranceCompanyId: string,
   ) => {
     const price = procedureInsurancePrices.find(
       (p) =>
         p.procedureId === procedureId &&
-        p.insuranceCompanyId === insuranceCompanyId
+        p.insuranceCompanyId === insuranceCompanyId,
     );
     return price?.price || 0;
   };
@@ -276,7 +276,7 @@ export function PatientForm({
   const updateAllProceduresForInsurance = () => {
     if (paymentType === "Insurance" && insuranceCompany) {
       const insuranceCompanyObj = insuranceCompanies.find(
-        (c) => c.name === insuranceCompany
+        (c) => c.name === insuranceCompany,
       );
 
       if (insuranceCompanyObj) {
@@ -284,12 +284,12 @@ export function PatientForm({
           procedures.map((procedure) => {
             if (procedure.templateId) {
               const template = procedureTemplates.find(
-                (t) => t.id === procedure.templateId
+                (t) => t.id === procedure.templateId,
               );
               if (template) {
                 const insurancePrice = getInsurancePrice(
                   template.id,
-                  insuranceCompanyObj.id
+                  insuranceCompanyObj.id,
                 );
                 const price =
                   insurancePrice > 0 ? insurancePrice : template.cashPrice;
@@ -303,7 +303,7 @@ export function PatientForm({
               }
             }
             return procedure;
-          })
+          }),
         );
       }
     }
@@ -330,7 +330,7 @@ export function PatientForm({
   const updateProcedure = (
     id: string,
     field: keyof ProcedureItem,
-    value: string | number
+    value: string | number,
   ) => {
     setProcedures((prev) =>
       prev.map((procedure) => {
@@ -352,7 +352,7 @@ export function PatientForm({
           return updatedProcedure;
         }
         return procedure;
-      })
+      }),
     );
   };
 
@@ -364,12 +364,12 @@ export function PatientForm({
 
     if (paymentType === "Insurance" && insuranceCompany) {
       const insuranceCompanyObj = insuranceCompanies.find(
-        (c) => c.name === insuranceCompany
+        (c) => c.name === insuranceCompany,
       );
       if (insuranceCompanyObj) {
         const insurancePrice = getInsurancePrice(
           template.id,
-          insuranceCompanyObj.id
+          insuranceCompanyObj.id,
         );
         if (insurancePrice > 0) {
           price = insurancePrice;
@@ -389,14 +389,14 @@ export function PatientForm({
           };
         }
         return procedure;
-      })
+      }),
     );
   };
 
   const calculateTotalAmount = () => {
     return procedures.reduce(
       (sum, procedure) => sum + procedure.finalAmount,
-      0
+      0,
     );
   };
 
@@ -483,7 +483,7 @@ export function PatientForm({
           "doctors",
           user.email,
           "patient_info",
-          patient.id
+          patient.id,
         );
         await updateDoc(patientRef, patientData);
         toast({
@@ -494,7 +494,7 @@ export function PatientForm({
       } else {
         await addDoc(
           collection(db, "doctors", user.email, "patient_info"),
-          patientData
+          patientData,
         );
         toast({
           title: "Patient added",
@@ -759,7 +759,7 @@ export function PatientForm({
                             updateProcedure(
                               procedure.id,
                               "name",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="Enter procedure name"
@@ -778,7 +778,7 @@ export function PatientForm({
                           updateProcedure(
                             procedure.id,
                             "discount",
-                            Number(e.target.value)
+                            Number(e.target.value),
                           )
                         }
                         tabIndex={procedureTabIndex + 1}
@@ -794,7 +794,7 @@ export function PatientForm({
                           updateProcedure(
                             procedure.id,
                             "finalAmount",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || 0,
                           )
                         }
                         className="bg-white"

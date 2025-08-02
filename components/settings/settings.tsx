@@ -102,7 +102,7 @@ export function SettingsPage({}: SettingsPageProps) {
             name: "",
             email: user.email,
           },
-          { merge: true }
+          { merge: true },
         );
       }
     } catch (error) {
@@ -115,7 +115,7 @@ export function SettingsPage({}: SettingsPageProps) {
     try {
       const db = getFirestoreInstance();
       const snapshot = await getDocs(
-        collection(db, "doctors", user.email, "procedure_templates")
+        collection(db, "doctors", user.email, "procedure_templates"),
       );
       const procedures = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -132,7 +132,7 @@ export function SettingsPage({}: SettingsPageProps) {
     try {
       const db = getFirestoreInstance();
       const snapshot = await getDocs(
-        collection(db, "doctors", user.email, "insurance_companies")
+        collection(db, "doctors", user.email, "insurance_companies"),
       );
       const companies = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -149,7 +149,7 @@ export function SettingsPage({}: SettingsPageProps) {
     try {
       const db = getFirestoreInstance();
       const snapshot = await getDocs(
-        collection(db, "doctors", user.email, "procedure_insurance_prices")
+        collection(db, "doctors", user.email, "procedure_insurance_prices"),
       );
       const prices = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -193,7 +193,7 @@ export function SettingsPage({}: SettingsPageProps) {
           name: name.trim(),
           email: user.email,
         },
-        { merge: true }
+        { merge: true },
       );
 
       setDoctorName(name.trim());
@@ -238,7 +238,7 @@ export function SettingsPage({}: SettingsPageProps) {
       if (profileFormRef.current) {
         profileFormRef.current.reset();
         const nameInput = profileFormRef.current.querySelector(
-          'input[name="name"]'
+          'input[name="name"]',
         ) as HTMLInputElement;
         if (nameInput) {
           nameInput.value = name.trim();
@@ -256,7 +256,7 @@ export function SettingsPage({}: SettingsPageProps) {
   };
 
   const handleAddInsuranceCompany = async (
-    e: React.FormEvent<HTMLFormElement>
+    e: React.FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
     if (!user?.email) return;
@@ -277,7 +277,7 @@ export function SettingsPage({}: SettingsPageProps) {
     }
 
     const exists = insuranceCompanies.some(
-      (c) => c.name.trim().toLowerCase() === companyName.trim().toLowerCase()
+      (c) => c.name.trim().toLowerCase() === companyName.trim().toLowerCase(),
     );
     if (exists) {
       toast({
@@ -298,7 +298,7 @@ export function SettingsPage({}: SettingsPageProps) {
 
       const docRef = await addDoc(
         collection(db, "doctors", user.email, "insurance_companies"),
-        companyData
+        companyData,
       );
 
       if (insuranceFormRef.current) {
@@ -325,7 +325,7 @@ export function SettingsPage({}: SettingsPageProps) {
 
   const handleEditInsuranceCompany = async (
     companyId: string,
-    name: string
+    name: string,
   ) => {
     if (!user?.email) return;
 
@@ -335,7 +335,7 @@ export function SettingsPage({}: SettingsPageProps) {
         doc(db, "doctors", user.email, "insurance_companies", companyId),
         {
           name,
-        }
+        },
       );
 
       toast({
@@ -361,7 +361,7 @@ export function SettingsPage({}: SettingsPageProps) {
     try {
       const db = getFirestoreInstance();
       await deleteDoc(
-        doc(db, "doctors", user.email, "insurance_companies", id)
+        doc(db, "doctors", user.email, "insurance_companies", id),
       );
 
       toast({
@@ -401,7 +401,7 @@ export function SettingsPage({}: SettingsPageProps) {
     }
 
     const exists = procedureTemplates.some(
-      (p) => p.name.trim().toLowerCase() === procedureName.trim().toLowerCase()
+      (p) => p.name.trim().toLowerCase() === procedureName.trim().toLowerCase(),
     );
     if (exists) {
       toast({
@@ -432,7 +432,7 @@ export function SettingsPage({}: SettingsPageProps) {
       const db = getFirestoreInstance();
       const docRef = await addDoc(
         collection(db, "doctors", user.email, "procedure_templates"),
-        procedureData
+        procedureData,
       );
 
       if (procedureFormRef.current) {
@@ -460,7 +460,7 @@ export function SettingsPage({}: SettingsPageProps) {
   const handleEditProcedure = async (
     procedureId: string,
     name: string,
-    cashPrice: number
+    cashPrice: number,
   ) => {
     if (!user?.email) return;
 
@@ -471,7 +471,7 @@ export function SettingsPage({}: SettingsPageProps) {
         {
           name,
           cashPrice,
-        }
+        },
       );
 
       toast({
@@ -497,7 +497,7 @@ export function SettingsPage({}: SettingsPageProps) {
     try {
       const db = getFirestoreInstance();
       await deleteDoc(
-        doc(db, "doctors", user.email, "procedure_templates", id)
+        doc(db, "doctors", user.email, "procedure_templates", id),
       );
 
       toast({
@@ -519,7 +519,7 @@ export function SettingsPage({}: SettingsPageProps) {
   const handleUpdateInsurancePrice = async (
     procedureId: string,
     insuranceCompanyId: string,
-    price: number
+    price: number,
   ) => {
     if (!user?.email) return;
 
@@ -530,7 +530,7 @@ export function SettingsPage({}: SettingsPageProps) {
       const existingPrice = procedureInsurancePrices.find(
         (p) =>
           p.procedureId === procedureId &&
-          p.insuranceCompanyId === insuranceCompanyId
+          p.insuranceCompanyId === insuranceCompanyId,
       );
 
       if (existingPrice) {
@@ -541,11 +541,11 @@ export function SettingsPage({}: SettingsPageProps) {
             "doctors",
             user.email,
             "procedure_insurance_prices",
-            existingPrice.id
+            existingPrice.id,
           ),
           {
             price,
-          }
+          },
         );
       } else {
         // Create new price
@@ -556,7 +556,7 @@ export function SettingsPage({}: SettingsPageProps) {
         };
         await addDoc(
           collection(db, "doctors", user.email, "procedure_insurance_prices"),
-          priceData
+          priceData,
         );
       }
 
@@ -579,12 +579,12 @@ export function SettingsPage({}: SettingsPageProps) {
 
   const getInsurancePrice = (
     procedureId: string,
-    insuranceCompanyId: string
+    insuranceCompanyId: string,
   ) => {
     const price = procedureInsurancePrices.find(
       (p) =>
         p.procedureId === procedureId &&
-        p.insuranceCompanyId === insuranceCompanyId
+        p.insuranceCompanyId === insuranceCompanyId,
     );
     return price?.price || 0;
   };
@@ -613,7 +613,7 @@ export function SettingsPage({}: SettingsPageProps) {
     // Generate Excel file
     XLSX.writeFile(
       workbook,
-      `procedure_templates_${new Date().toISOString().split("T")[0]}.xlsx`
+      `procedure_templates_${new Date().toISOString().split("T")[0]}.xlsx`,
     );
 
     toast({
@@ -624,7 +624,7 @@ export function SettingsPage({}: SettingsPageProps) {
   };
 
   const handleImportProcedures = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -710,11 +710,11 @@ export function SettingsPage({}: SettingsPageProps) {
 
         // Check for duplicates
         const exists = procedureTemplates.some(
-          (p) => p.name.trim().toLowerCase() === procedureName.toLowerCase()
+          (p) => p.name.trim().toLowerCase() === procedureName.toLowerCase(),
         );
         if (exists) {
           errors.push(
-            `Row ${i + 1}: Procedure '${procedureName}' already exists`
+            `Row ${i + 1}: Procedure '${procedureName}' already exists`,
           );
           continue;
         }
@@ -759,7 +759,7 @@ export function SettingsPage({}: SettingsPageProps) {
       for (const procedure of proceduresToAdd) {
         await addDoc(
           collection(db, "doctors", user.email, "procedure_templates"),
-          procedure
+          procedure,
         );
       }
 
@@ -997,15 +997,15 @@ export function SettingsPage({}: SettingsPageProps) {
                                   const target = e.target as HTMLInputElement;
                                   const cashPriceInput =
                                     target.parentElement?.parentElement?.querySelector(
-                                      'input[data-field="cashPrice"]'
+                                      'input[data-field="cashPrice"]',
                                     ) as HTMLInputElement;
                                   const cashPrice = parseFloat(
-                                    cashPriceInput?.value || "0"
+                                    cashPriceInput?.value || "0",
                                   );
                                   handleEditProcedure(
                                     procedure.id,
                                     target.value,
-                                    cashPrice
+                                    cashPrice,
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingProcedure(null);
@@ -1014,15 +1014,15 @@ export function SettingsPage({}: SettingsPageProps) {
                               onBlur={(e) => {
                                 const cashPriceInput =
                                   e.target.parentElement?.parentElement?.querySelector(
-                                    'input[data-field="cashPrice"]'
+                                    'input[data-field="cashPrice"]',
                                   ) as HTMLInputElement;
                                 const cashPrice = parseFloat(
-                                  cashPriceInput?.value || "0"
+                                  cashPriceInput?.value || "0",
                                 );
                                 handleEditProcedure(
                                   procedure.id,
                                   e.target.value,
-                                  cashPrice
+                                  cashPrice,
                                 );
                               }}
                             />
@@ -1042,12 +1042,12 @@ export function SettingsPage({}: SettingsPageProps) {
                                   const target = e.target as HTMLInputElement;
                                   const nameInput =
                                     target.parentElement?.parentElement?.querySelector(
-                                      "input"
+                                      "input",
                                     ) as HTMLInputElement;
                                   handleEditProcedure(
                                     procedure.id,
                                     nameInput?.value || procedure.name,
-                                    parseFloat(target.value)
+                                    parseFloat(target.value),
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingProcedure(null);
@@ -1057,13 +1057,13 @@ export function SettingsPage({}: SettingsPageProps) {
                                 const target = e.target as HTMLInputElement;
                                 const nameInput =
                                   target.parentElement?.parentElement?.querySelector(
-                                    "input"
+                                    "input",
                                   ) as HTMLInputElement;
                                 const name = nameInput?.value || procedure.name;
                                 handleEditProcedure(
                                   procedure.id,
                                   name,
-                                  parseFloat(target.value)
+                                  parseFloat(target.value),
                                 );
                               }}
                             />
@@ -1080,21 +1080,21 @@ export function SettingsPage({}: SettingsPageProps) {
                                   variant="outline"
                                   onClick={() => {
                                     const nameInput = document.querySelector(
-                                      `tr[data-id="${procedure.id}"] input`
+                                      `tr[data-id="${procedure.id}"] input`,
                                     ) as HTMLInputElement;
                                     const cashPriceInput =
                                       document.querySelector(
-                                        `tr[data-id="${procedure.id}"] input[data-field="cashPrice"]`
+                                        `tr[data-id="${procedure.id}"] input[data-field="cashPrice"]`,
                                       ) as HTMLInputElement;
                                     const name =
                                       nameInput?.value || procedure.name;
                                     const cashPrice = parseFloat(
-                                      cashPriceInput?.value || "0"
+                                      cashPriceInput?.value || "0",
                                     );
                                     handleEditProcedure(
                                       procedure.id,
                                       name,
-                                      cashPrice
+                                      cashPrice,
                                     );
                                   }}
                                 >
@@ -1200,7 +1200,7 @@ export function SettingsPage({}: SettingsPageProps) {
                                   const target = e.target as HTMLInputElement;
                                   handleEditInsuranceCompany(
                                     company.id,
-                                    target.value
+                                    target.value,
                                   );
                                 } else if (e.key === "Escape") {
                                   setEditingInsurance(null);
@@ -1209,7 +1209,7 @@ export function SettingsPage({}: SettingsPageProps) {
                               onBlur={(e) => {
                                 handleEditInsuranceCompany(
                                   company.id,
-                                  e.target.value
+                                  e.target.value,
                                 );
                               }}
                             />
@@ -1226,11 +1226,11 @@ export function SettingsPage({}: SettingsPageProps) {
                                   variant="outline"
                                   onClick={() => {
                                     const nameInput = document.querySelector(
-                                      `tr[data-id="${company.id}"] input`
+                                      `tr[data-id="${company.id}"] input`,
                                     ) as HTMLInputElement;
                                     handleEditInsuranceCompany(
                                       company.id,
-                                      nameInput?.value || company.name
+                                      nameInput?.value || company.name,
                                     );
                                   }}
                                 >
@@ -1302,8 +1302,8 @@ export function SettingsPage({}: SettingsPageProps) {
                     insuranceCompanies.length === 0
                       ? "Please add procedures and insurance companies first."
                       : procedureTemplates.length === 0
-                      ? "Please add procedures first."
-                      : "Please add insurance companies first."}
+                        ? "Please add procedures first."
+                        : "Please add insurance companies first."}
                   </p>
                 </div>
               ) : (
@@ -1330,7 +1330,7 @@ export function SettingsPage({}: SettingsPageProps) {
                           {insuranceCompanies.map((company) => {
                             const currentPrice = getInsurancePrice(
                               procedure.id,
-                              company.id
+                              company.id,
                             );
                             const priceKey = `${procedure.id}-${company.id}`;
 
@@ -1349,7 +1349,7 @@ export function SettingsPage({}: SettingsPageProps) {
                                         handleUpdateInsurancePrice(
                                           procedure.id,
                                           company.id,
-                                          parseFloat(target.value)
+                                          parseFloat(target.value),
                                         );
                                       } else if (e.key === "Escape") {
                                         setEditingPrice(null);
@@ -1359,7 +1359,7 @@ export function SettingsPage({}: SettingsPageProps) {
                                       handleUpdateInsurancePrice(
                                         procedure.id,
                                         company.id,
-                                        parseFloat(e.target.value)
+                                        parseFloat(e.target.value),
                                       );
                                     }}
                                   />

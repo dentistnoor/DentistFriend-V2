@@ -41,7 +41,7 @@ export function PatientTable({
   onDelete,
 }: PatientTableProps) {
   const [deletePatient, setDeletePatient] = useState<PatientRecord | null>(
-    null
+    null,
   );
   const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
@@ -64,7 +64,7 @@ export function PatientTable({
     try {
       const db = getFirestoreInstance();
       await deleteDoc(
-        doc(db, "doctors", user.email, "patient_info", deletePatient.id)
+        doc(db, "doctors", user.email, "patient_info", deletePatient.id),
       );
       toast({
         title: "Patient deleted",
@@ -222,7 +222,7 @@ export function PatientTable({
                   >
                     {page}
                   </Button>
-                )
+                ),
               )}
             </div>
             <Button
